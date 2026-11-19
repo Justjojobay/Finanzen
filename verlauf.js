@@ -1,12 +1,14 @@
-/* Kursverlauf für das Depot und einzelne Positionen */
+/* Kursverlauf für das Depot und einzelne Positionen (Version 2) */
 "use strict";
 (function () {
   const URL_KEY = "finanzKursUrl";
   const BEREICHE = [["1mo", "1M"], ["3mo", "3M"], ["6mo", "6M"], ["1y", "1J"], ["5y", "5J"], ["max", "Max"]];
   const NAMEN = {"1mo": "1 Monat", "3mo": "3 Monate", "6mo": "6 Monate", "1y": "1 Jahr", "5y": "5 Jahre", "max": "Gesamt"};
   const MONATE = {"1mo": 1, "3mo": 3, "6mo": 6, "1y": 12, "5y": 60, "max": null};
-  const TTL = 60 * 60000;                 // Verlauf eine Stunde zwischenspeichern
-  const VC = {}, ZEIT = {}, FEHLER = {}, LAEDT = new Set(), charts = {};
+  const TTL = 60 * 60000;          // erfolgreiche Verläufe eine Stunde merken
+  const NEU_VERSUCH = 5 * 60000;   // fehlgeschlagene nach 5 Minuten erneut versuchen
+  const PAKET = 8;                 // höchstens 8 Ticker pro Abruf (Cloudflare-Limit)
+  const VC = {}, ZEIT = {}, FEHLZEIT = {}, offen = new Set(), charts = {};
   let offenKey = null, chartNr = 0;
   UI.vBereich = UI.vBereich || "1y";
 
@@ -14,6 +16,7 @@
     .spread[data-action]{cursor:pointer}.vc{touch-action:pan-y}.vc-info{min-height:1.3em;margin:6px 0 4px}</style>`);
 
   const kursUrl = () => (localStorage.getItem(URL_KEY) || "").trim();
+  const sch = (b, t) => b + "|" + t;
 
   // Ersatz ohne Worker: selbst gespeicherte Kurse
   function gespeichert(t, bereich) {
@@ -22,33 +25,48 @@
   }
 
   function hole(ticker, bereich) {
-    const lokal = () => ({reihen: Object.fromEntries(ticker.map(t => [t, gespeichert(t, bereich)])), laedt: false, quelle: "gespeichert"});
-    if (!kursUrl() || !navigator.onLine || (FEHLER[bereich] && Date.now() - FEHLER[bereich] < 5 * 60000)) return lokal();
+    const lokal = () => ({reihen: Object.fromEntries(ticker.map(t => [t, gespeichert(t, bereich)])),
+      laedt: false, quelle: "gespeichert", ersatz: new Set()});
+    if (!kursUrl() || !navigator.onLine) return lokal();
     if (ZEIT[bereich] && Date.now() - ZEIT[bereich] > TTL) { VC[bereich] = {}; ZEIT[bereich] = 0; }
-    const vc = VC[bereich] = VC[bereich] || {};
-    const fehlt = ticker.filter(t => !t.startsWith("DEMO") && !(t in vc));
+    const vc = VC[bereich] = VC[bereich] || {}, jetzt = Date.now();
+    const fehlt = ticker.filter(t => !t.startsWith("DEMO") && !offen.has(sch(bereich, t)) &&
+      (!(t in vc) || (vc[t] === null && jetzt - (FEHLZEIT[sch(bereich, t)] || 0) > NEU_VERSUCH)));
     if (fehlt.length) lade(fehlt, bereich);
-    const reihen = {};
-    for (const t of ticker) reihen[t] = vc[t] || gespeichert(t, bereich);
-    return {reihen, laedt: fehlt.length > 0, quelle: "live"};
+    const reihen = {}, ersatz = new Set();
+    for (const t of ticker) {
+      if (vc[t]) reihen[t] = vc[t];
+      else { reihen[t] = gespeichert(t, bereich); if (!t.startsWith("DEMO")) ersatz.add(t); }
+    }
+    return {reihen, laedt: ticker.some(t => offen.has(sch(bereich, t))), quelle: "live", ersatz};
   }
 
+  // In kleinen Paketen nacheinander laden
   async function lade(ticker, bereich) {
-    const key = bereich + ":" + ticker.join(",");
-    if (LAEDT.has(key)) return;
-    LAEDT.add(key);
-    try {
-      const url = kursUrl().replace(/\/+$/, "") + "/?h=" + encodeURIComponent(ticker.join(",")) + "&r=" + bereich;
-      const r = await fetch(url, {cache: "no-store"});
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok || !d.verlauf) throw new Error(d.fehler || "Fehler " + r.status);
+    ticker.forEach(t => offen.add(sch(bereich, t)));
+    let fehler = false;
+    for (let i = 0; i < ticker.length; i += PAKET) {
+      const teil = ticker.slice(i, i + PAKET);
       const vc = VC[bereich] = VC[bereich] || {};
-      for (const t of ticker) vc[t] = d.verlauf[t] && d.verlauf[t].length ? d.verlauf[t] : null;
-      ZEIT[bereich] = ZEIT[bereich] || Date.now();
-    } catch (e) {
-      FEHLER[bereich] = Date.now();
-      toast("Kursverlauf konnte nicht geladen werden");
-    } finally { LAEDT.delete(key); aktualisiere(); }
+      try {
+        const url = kursUrl().replace(/\/+$/, "") + "/?h=" + encodeURIComponent(teil.join(",")) + "&r=" + bereich;
+        const r = await fetch(url, {cache: "no-store"});
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || !d.verlauf) throw new Error(d.fehler || "Fehler " + r.status);
+        for (const t of teil) {
+          const v = d.verlauf[t];
+          vc[t] = v && v.length >= 2 ? v : null;
+          if (!vc[t]) FEHLZEIT[sch(bereich, t)] = Date.now();
+        }
+        ZEIT[bereich] = ZEIT[bereich] || Date.now();
+      } catch (e) {
+        fehler = true;
+        for (const t of teil) { vc[t] = null; FEHLZEIT[sch(bereich, t)] = Date.now(); }
+      }
+      teil.forEach(t => offen.delete(sch(bereich, t)));
+      aktualisiere();
+    }
+    if (fehler) toast("Ein Teil der Kursverläufe konnte nicht geladen werden");
   }
 
   function aktualisiere() {
@@ -56,12 +74,14 @@
     if (offenKey && document.getElementById("vSheet")) zeigeSheet(offenKey);
   }
 
-  // Gesamtwert der Positionen pro Tag (heutige Stückzahlen × damaliger Kurs)
-  function depotReihe(pos, reihen) {
-    const gueltig = pos.filter(p => (reihen[p.ticker] || []).length);
+  // Gesamtwert pro Tag (heutige Stückzahlen × damaliger Kurs); Positionen ohne Verlauf werden weggelassen
+  function depotReihe(pos, reihen, ersatz) {
+    const gueltig = pos.filter(p => !ersatz.has(p.ticker) && (reihen[p.ticker] || []).length >= 2);
     const fehlend = pos.filter(p => !gueltig.includes(p));
-    if (!gueltig.length) return {punkte: [], fehlend};
-    const start = gueltig.map(p => reihen[p.ticker][0][0]).sort().pop();
+    if (!gueltig.length) return {punkte: [], fehlend, begrenzt: [], start: null};
+    const anfaenge = gueltig.map(p => reihen[p.ticker][0][0]).sort();
+    const start = anfaenge[anfaenge.length - 1];
+    const begrenzt = tageBis(anfaenge[0], start) > 7 ? gueltig.filter(p => reihen[p.ticker][0][0] === start) : [];
     const daten = [...new Set(gueltig.flatMap(p => reihen[p.ticker].map(x => x[0])))].filter(d => d >= start).sort();
     const idx = new Map(gueltig.map(p => [p, 0]));
     const punkte = daten.map(d => {
@@ -75,7 +95,7 @@
       }
       return {datum: d, kurs: wert};
     });
-    return {punkte, fehlend};
+    return {punkte, fehlend, begrenzt, start};
   }
 
   // Liniendiagramm im Stil der Aktien-App
@@ -132,17 +152,22 @@
       <div class="s ${d >= 0 ? "pos" : "neg"}" style="font-weight:600">${d >= 0 ? "+" : ""}${eur(d)} (${proz(a ? d / a * 100 : null)})
       <span class="muted" style="font-weight:400">· ${NAMEN[UI.vBereich]}</span></div>`;
   }
+  const namenListe = l => l.map(p => `${esc(p.name)} (${esc(p.ticker)})`).join(", ");
 
   // Karte mit dem Verlauf mehrerer Positionen
   function verlaufKarte(pos, titel) {
-    const {reihen, laedt, quelle} = hole([...new Set(pos.map(p => p.ticker))], UI.vBereich);
-    const {punkte, fehlend} = depotReihe(pos, reihen);
+    const {reihen, laedt, quelle, ersatz} = hole([...new Set(pos.map(p => p.ticker))], UI.vBereich);
+    const {punkte, fehlend, begrenzt, start} = depotReihe(pos, reihen, ersatz);
     const einstand = summe(pos.filter(p => !fehlend.includes(p)), p => p.einstand);
     let h = `<div class="card"><h3>📈 ${esc(titel)}</h3>${bereichsKnoepfe()}`;
     if (punkte.length >= 2) h += kopfwerte(punkte) + vChart(punkte, einstand, "Einstand");
     else h += `<div class="leer">${laedt ? "Kursverlauf wird geladen …" : "Noch keine Kursdaten für diesen Zeitraum."}</div>`;
-    if (laedt && punkte.length >= 2) h += `<p class="s muted">Wird aktualisiert …</p>`;
-    if (fehlend.length) h += `<p class="s muted">Ohne Verlauf: ${fehlend.map(p => esc(p.name)).join(", ")}</p>`;
+    if (laedt) h += `<p class="s muted">Kursverläufe werden geladen …</p>`;
+    if (!laedt && fehlend.length) h += `<div class="hinweis">Nicht enthalten, weil kein Kursverlauf gefunden wurde:
+      <b>${namenListe(fehlend)}</b>. Bitte den Ticker prüfen (Yahoo-Format, z. B. SAP.DE). Der Wert oben ist deshalb
+      kleiner als dein Depotwert.</div>`;
+    if (begrenzt.length) h += `<p class="s muted">Der Verlauf beginnt erst am ${datumDE(start)}, weil für
+      ${namenListe(begrenzt)} erst ab dann Kursdaten vorliegen.</p>`;
     if (quelle === "gespeichert") h += `<p class="s muted">Zeigt nur deine gespeicherten Kurse. Für den vollständigen Verlauf
       unter ⚙️ die Worker-Adresse eintragen.</p>`;
     h += `<p class="s muted">Wert deiner heutigen Bestände im Zeitverlauf, ohne spätere Käufe, Verkäufe und Dividenden.
@@ -155,12 +180,15 @@
     const p = depotPositionen().find(x => x.key === key);
     if (!p) return;
     offenKey = key;
-    const {reihen, laedt, quelle} = hole([p.ticker], UI.vBereich);
+    const {reihen, laedt, quelle, ersatz} = hole([p.ticker], UI.vBereich);
     const punkte = (reihen[p.ticker] || []).map(([datum, kurs]) => ({datum, kurs}));
     let h = `<div id="vSheet">${kopf(esc(p.name))}
       <div class="s muted" style="margin:-8px 0 12px">${esc(p.ticker)} · ${esc(p.typ)} · ${esc(bankName(p.bankId))}</div>${bereichsKnoepfe()}`;
     if (punkte.length >= 2) h += kopfwerte(punkte) + vChart(punkte, p.kaufkurs, "Ø Kaufkurs");
     else h += `<div class="leer">${laedt ? "Kursverlauf wird geladen …" : "Noch keine Kursdaten für diesen Zeitraum."}</div>`;
+    if (!laedt && ersatz.has(p.ticker)) h += `<div class="hinweis">Der Kursdienst liefert für <b>${esc(p.ticker)}</b> keinen Verlauf.
+      Prüfe, ob der Ticker im Yahoo-Format ist. Suche dazu auf finance.yahoo.com nach dem Namen oder der ISIN.
+      ${punkte.length >= 2 ? "Angezeigt werden nur deine gespeicherten Kurse." : ""}</div>`;
     if (quelle === "gespeichert") h += `<p class="s muted">Zeigt nur deine gespeicherten Kurse.</p>`;
     h += `<div class="grid2" style="margin-top:12px">${kpi("Stück", fmtZahl(p.menge))}${kpi("Ø Kaufkurs", eur(p.kaufkurs))}
       ${kpi("Aktueller Wert", eur(p.wert))}${kpi("Gewinn / Verlust", p.gv != null ? eur(p.gv) : "–",
