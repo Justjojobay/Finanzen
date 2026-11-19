@@ -62,6 +62,7 @@ main{padding:14px;max-width:700px;margin:0 auto}
 .b-blau{background:rgba(37,99,235,.15);color:var(--primary)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;
   padding:11px 14px;font-size:.95rem;font-weight:600;background:var(--primary);color:#fff;text-decoration:none;font-family:inherit}
+.btn:disabled{opacity:.45}
 .btn.sek{background:var(--input);color:var(--text)}
 .btn.gefahr{background:rgba(239,68,68,.15);color:var(--red)}
 .btn.klein{padding:7px 10px;font-size:.8rem;border-radius:10px}
@@ -83,29 +84,36 @@ main{padding:14px;max-width:700px;margin:0 auto}
 @keyframes hoch{from{transform:translateY(100%)}to{transform:none}}
 .sheet h2{margin:0 0 14px;font-size:1.2rem;display:flex;justify-content:space-between;align-items:center}
 .sheet h3{margin:0 0 6px;font-size:1rem}
-.x{background:var(--input);border:0;color:var(--text);width:34px;height:34px;border-radius:50%;font-size:1rem}
+.x{background:var(--input);border:0;color:var(--text);width:34px;height:34px;border-radius:50%;font-size:1rem;flex-shrink:0}
 label.f{display:block;margin-bottom:12px;font-size:.8rem;color:var(--muted)}
 label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:5px;padding:11px 12px;font-size:16px;
   min-height:46px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);font-family:inherit}
+label.check{display:flex;gap:10px;align-items:center;margin-bottom:12px;font-size:.9rem}
+label.check input{width:22px;height:22px}
 .zeile{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .leer{color:var(--muted);text-align:center;padding:18px 6px;font-size:.9rem}
 .warn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:14px;padding:12px;margin-bottom:10px;font-size:.9rem}
 .hinweis{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:14px;padding:12px;margin-bottom:12px;font-size:.88rem}
 .chart{width:100%;height:auto;display:block}
 svg text{fill:var(--muted)}
-.donut svg{width:190px;height:190px;display:block;margin:0 auto}
+.donut svg{width:200px;height:200px;display:block;margin:0 auto}
 .donut .dt1{font-size:3px}
 .donut .dt2{font-size:3.6px;font-weight:700;fill:var(--text)}
+.donut .dseg{font-size:2.4px;font-weight:700;fill:#fff}
 .legende{list-style:none;padding:0;margin:12px 0 0}
 .legende li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.88rem}
 .ld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
-.ln{flex:1}.lv{color:var(--muted);font-size:.8rem}
+.ln{flex:1;min-width:0;overflow-wrap:anywhere}.lv{color:var(--muted);font-size:.8rem;white-space:nowrap}
+.lv b{color:var(--text)}
 .minileg{display:flex;gap:14px;justify-content:center;font-size:.8rem;color:var(--muted);margin-top:6px}
 .minileg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
 .hb{margin-bottom:10px}.hb .bar{margin-top:5px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
 .chip{border:1px solid var(--border);background:var(--card);color:var(--text);padding:7px 12px;border-radius:20px;white-space:nowrap;font-size:.85rem}
 .chip.aktiv{background:var(--primary);color:#fff;border-color:var(--primary)}
+.chip.plus{border-style:dashed;color:var(--primary);font-weight:600}
+.unter{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 4px;font-weight:600}
+.reihe{display:flex;gap:10px;align-items:center;min-width:0}
 details summary{cursor:pointer;padding:4px 0}
 .trenner{border:0;border-top:1px solid var(--border);margin:18px 0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top));background:#0F172A;
@@ -128,7 +136,7 @@ details summary{cursor:pointer;padding:4px 0}
 <nav class="tabbar">
   <button data-action="tab" data-tab="uebersicht">🏠<span>Übersicht</span></button>
   <button data-action="tab" data-tab="cockpit">💰<span>Cockpit</span></button>
-  <button data-action="tab" data-tab="depot">📈<span>Depot</span></button>
+  <button data-action="tab" data-tab="banken">🏦<span>Banken</span></button>
   <button data-action="tab" data-tab="abos">📑<span>Abos</span></button>
 </nav>
 <div id="sheet" class="sheet-bg" hidden><div class="sheet" id="sheetInhalt"></div></div>
@@ -142,6 +150,10 @@ const KATEGORIEN = ["Gehalt", "Miete", "Lebensmittel", "Mobilität", "Freizeit",
   "Versicherung", "Abos", "Gesundheit", "Shopping", "Sonstiges"];
 const ABO_KATEGORIEN = ["Streaming", "Versicherung", "Strom & Gas", "Mobilfunk & Internet",
   "Fitness", "Software", "Sonstiges"];
+const KONTO_ARTEN = ["Girokonto", "Tagesgeld", "Festgeld", "Sparkonto", "Bausparvertrag",
+  "Kreditkarte", "Bargeld", "Sonstiges Konto"];
+const WP_TYPEN = ["Aktie", "ETF", "Fonds", "Anleihe", "Krypto", "Sonstiges Wertpapier"];
+const ANLAGEARTEN = [...KONTO_ARTEN, ...WP_TYPEN];
 const INTERVALLE = {"monatlich": 1, "vierteljährlich": 3, "halbjährlich": 6, "jährlich": 12};
 const FARBEN = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#06B6D4", "#EF4444", "#64748B", "#EC4899"];
 const MONATSNAMEN = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
@@ -149,9 +161,12 @@ const MONATSNAMEN = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli
 const TITEL = {
   uebersicht: ["Übersicht", "Alles Wichtige auf einen Blick"],
   cockpit: ["Finanz-Cockpit", "Einnahmen, Ausgaben, Budget & Sparziel"],
-  depot: ["Depot", "Aktien & ETFs mit Kursverlauf und News"],
+  banken: ["Banken", "Dein Vermögen je Bank und gesamt"],
   abos: ["Abos & Verträge", "Kosten und Kündigungsfristen"],
 };
+const CHART_OPTIONEN = [["bank-p", "Nach Bank (in %)"], ["bank-e", "Nach Bank (in €)"],
+  ["art-p", "Nach Anlageart (in %)"], ["art-e", "Nach Anlageart (in €)"],
+  ["pos-p", "Nach Position (in %)"], ["pos-e", "Nach Position (in €)"]];
 const THEMES = ["auto", "hell", "dunkel"];
 const THEME_NAMEN = {auto: "Automatisch", hell: "Hell", dunkel: "Dunkel"};
 const THEME_ICON = {auto: "🌓", hell: "☀️", dunkel: "🌙"};
@@ -165,8 +180,16 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g,
 const euroFmt = new Intl.NumberFormat("de-DE", {style: "currency", currency: "EUR"});
 const eur = x => (x == null || isNaN(x)) ? "–" : euroFmt.format(x);
 const proz = x => (x == null || !isFinite(x)) ? "–" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %";
+const prozRoh = x => (isFinite(x) ? x : 0).toFixed(1).replace(".", ",") + " %";
 const fmtZahl = n => Number(n).toLocaleString("de-DE", {maximumFractionDigits: 4});
 const summe = (arr, f) => arr.reduce((s, x) => s + (+f(x) || 0), 0);
+// Eindeutige Farbe pro Nummer (goldener Winkel => benachbarte Nummern sehen klar verschieden aus)
+const farbeNr = i => `hsl(${Math.round((217 + Math.max(i, 0) * 137.508) % 360)}, ${i % 2 ? 58 : 72}%, ${i % 3 === 2 ? 60 : 50}%)`;
+function kurzEur(v) {
+  if (v >= 1e6) return (v / 1e6).toFixed(1).replace(".", ",") + " Mio";
+  if (v >= 1000) return (v / 1000).toFixed(1).replace(".", ",") + "k";
+  return Math.round(v) + " €";
+}
 
 function heute() {
   const d = new Date();
@@ -191,7 +214,7 @@ function tageBis(von, bis) {
 }
 function vormonat(m) { return addMonate(m + "-01", -1).slice(0, 7); }
 function zahl(v) {
-  let s = String(v ?? "").trim().replace(/\s/g, "");
+  let s = String(v ?? "").trim().replace(/\s/g, "").replace("−", "-");
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
   const n = parseFloat(s);
   return isFinite(n) ? n : NaN;
@@ -199,12 +222,13 @@ function zahl(v) {
 
 /* ================= Daten ================= */
 const STANDARD = () => ({
-  buchungen: [], regeln: [], depot: [], kurse: {}, abos: [],
-  einst: {budget: 1500, sparziel: 5000, theme: "auto", letztesBackup: null},
+  buchungen: [], regeln: [], banken: [], konten: [], depot: [], kurse: {}, abos: [],
+  einst: {budget: 1500, sparziel: 5000, theme: "auto", letztesBackup: null, farbZaehler: 0},
 });
 let S = STANDARD();
 let speicherOK = true;
-const UI = {tab: "uebersicht", monat: heute().slice(0, 7), cockpitAnsicht: "uebersicht", depotTicker: null};
+const UI = {tab: "uebersicht", monat: heute().slice(0, 7), cockpitAnsicht: "uebersicht",
+  bank: "alle", chart: "bank-p", chartBank: "art-p", depotTicker: null};
 
 function zusammenfuehren(d) {
   return {...STANDARD(), ...d, einst: {...STANDARD().einst, ...(d.einst || {})}};
@@ -219,6 +243,21 @@ function speichern() {
   try { localStorage.setItem(SPEICHER_KEY, JSON.stringify(S)); }
   catch (e) { speicherOK = false; zeigeBanner(); }
 }
+// Jede Bank, jedes Konto und jeder Kauf bekommt einmalig eine feste Farbnummer
+function sichereFarben() {
+  let g = false;
+  for (const x of [...S.banken, ...S.konten, ...S.depot]) {
+    if (x.fnr == null) { x.fnr = S.einst.farbZaehler++; g = true; }
+  }
+  return g;
+}
+const bid = id => S.banken.some(b => b.id === id) ? id : "";
+const bankName = id => (S.banken.find(b => b.id === id) || {name: "Ohne Bank"}).name;
+const bankFarbe = b => b.fnr != null ? farbeNr(b.fnr) : "#94A3B8";
+function kontoLabel(id) {
+  const k = S.konten.find(x => x.id === id);
+  return k ? `${bankName(k.bankId)} · ${k.name}` : "";
+}
 
 /* ================= Automatik ================= */
 function erzeugeWiederkehrende() {
@@ -232,8 +271,8 @@ function erzeugeWiederkehrende() {
       const d = addMonate(r.start, k * schritt);   // immer vom Start aus, damit der 31. nicht wandert
       if (d > grenze) break;
       if (!r.gebuchtBis || d > r.gebuchtBis) {
-        S.buchungen.push({id: uid(), datum: d, typ: r.typ, kategorie: r.kategorie,
-          betrag: +r.betrag, notiz: "Automatisch", serie: r.name});
+        S.buchungen.push({id: uid(), datum: d, typ: r.typ, kategorie: r.kategorie, betrag: +r.betrag,
+          notiz: "Automatisch", serie: r.name, kontoId: r.kontoId || "", zielKontoId: r.zielKontoId || ""});
         r.gebuchtBis = d;
         n++;
       }
@@ -270,17 +309,29 @@ function ampel(aus, budget) {
   if (a <= 1) return {a, farbe: "var(--yellow)", text: "Achtung: Budget fast aufgebraucht"};
   return {a, farbe: "var(--red)", text: "Budget überschritten"};
 }
+// Kontostand = Startsaldo + alle Buchungen ab dem Startdatum
+function kontoSaldo(k) {
+  let s = +k.saldo || 0;
+  for (const b of S.buchungen) {
+    if (k.stand && b.datum < k.stand) continue;
+    if (b.kontoId === k.id) s += b.typ === "Einnahme" ? +b.betrag : -b.betrag;
+    if (b.typ === "Sparen" && b.zielKontoId === k.id) s += +b.betrag;
+  }
+  return s;
+}
 function letzterKurs(t) {
   const k = S.kurse[t];
   if (!k || !k.length) return null;
   const s = [...k].sort((a, b) => a.datum.localeCompare(b.datum));
   return s[s.length - 1];
 }
+// Gleiche Wertpapiere bei derselben Bank werden zusammengefasst
 function depotPositionen() {
   const map = new Map();
   for (const p of S.depot) {
-    if (!map.has(p.ticker)) map.set(p.ticker, {ticker: p.ticker, name: p.name, typ: p.typ, menge: 0, einstand: 0});
-    const m = map.get(p.ticker);
+    const bankId = bid(p.bankId), key = bankId + "|" + p.ticker;
+    if (!map.has(key)) map.set(key, {key, bankId, ticker: p.ticker, name: p.name, typ: p.typ, menge: 0, einstand: 0, fnr: p.fnr});
+    const m = map.get(key);
     m.menge += +p.menge; m.einstand += p.menge * p.kaufkurs;
   }
   return [...map.values()].map(m => {
@@ -295,6 +346,45 @@ function depotSumme(pos) {
   const g = pos.filter(p => p.wert != null);
   const wert = summe(g, p => p.wert), einstand = summe(g, p => p.einstand);
   return {wert, einstand, gv: wert - einstand, gvp: einstand ? (wert - einstand) / einstand * 100 : null, anzahl: g.length};
+}
+// Alle Vermögenswerte (Konten + Wertpapiere) als eine Liste
+function vermoegen() {
+  const items = S.konten.map(k => ({typ: "konto", id: k.id, bankId: bid(k.bankId), name: k.name,
+    art: k.art, wert: kontoSaldo(k), fnr: k.fnr}));
+  for (const p of depotPositionen()) {
+    items.push({typ: "wp", id: p.key, bankId: p.bankId, name: p.name, art: p.typ,
+      wert: p.wert != null ? p.wert : p.einstand, ohneKurs: p.kurs == null, pos: p, fnr: p.fnr});
+  }
+  return items;
+}
+function bankSummen(items) {
+  const l = S.banken.map(b => ({...b, echt: true}));
+  if (items.some(x => x.bankId === "")) l.push({id: "", name: "Ohne Bank", echt: false, fnr: null, depot: true});
+  return l.map(b => {
+    const it = items.filter(x => x.bankId === b.id);
+    return {...b, items: it, summe: summe(it, x => x.wert),
+      anzK: it.filter(x => x.typ === "konto").length, anzP: it.filter(x => x.typ === "wp").length};
+  });
+}
+function pieDaten(items, gruppe) {
+  if (gruppe === "pos") {
+    return items.filter(x => x.wert > 0).map(x => ({
+      label: x.name + (UI.bank === "alle" ? " · " + bankName(x.bankId) : ""), value: x.wert, farbe: farbeNr(x.fnr)}));
+  }
+  const m = new Map();
+  for (const x of items) {
+    const k = gruppe === "bank" ? x.bankId : x.art;
+    if (!m.has(k)) {
+      if (gruppe === "bank") {
+        const b = S.banken.find(y => y.id === k);
+        m.set(k, {label: b ? b.name : "Ohne Bank", value: 0, farbe: b ? bankFarbe(b) : "#94A3B8"});
+      } else {
+        m.set(k, {label: k, value: 0, farbe: farbeNr(ANLAGEARTEN.indexOf(k))});
+      }
+    }
+    m.get(k).value += x.wert;
+  }
+  return [...m.values()];
 }
 function aboDaten() {
   const h = heute();
@@ -313,24 +403,34 @@ function aboDaten() {
 }
 const newsUrl = q => "https://news.google.com/search?q=" + encodeURIComponent(q) + "&hl=de&gl=DE&ceid=DE:de";
 const yahooUrl = t => "https://finance.yahoo.com/quote/" + encodeURIComponent(t);
+const newsZusatz = typ => ({ETF: "ETF", Fonds: "Fonds", Krypto: "Krypto", Anleihe: "Anleihe"}[typ] || "Aktie");
 
 /* ================= Diagramme (eigenes SVG, keine externen Bibliotheken) ================= */
-function donut(items) {
-  items = items.filter(i => i.value > 0).sort((a, b) => b.value - a.value);
+function donut(items, modus = "e") {
+  items = items.filter(i => i.value > 0).sort((a, b) => b.value - a.value)
+    .map((it, i) => ({...it, farbe: it.farbe || FARBEN[i % FARBEN.length]}));
   const total = summe(items, i => i.value);
   if (!total) return `<div class="leer">Noch keine Daten</div>`;
-  let off = 25;
-  const segs = items.map((it, i) => {
+  let off = 25, kum = 0, segs = "", texte = "";
+  items.forEach(it => {
     const p = it.value / total * 100;
-    const s = `<circle r="15.915" cx="21" cy="21" fill="none" stroke="${FARBEN[i % FARBEN.length]}" stroke-width="5.5"
+    segs += `<circle r="15.915" cx="21" cy="21" fill="none" stroke="${it.farbe}" stroke-width="5.5"
       stroke-dasharray="${p.toFixed(3)} ${(100 - p).toFixed(3)}" stroke-dashoffset="${off.toFixed(3)}"/>`;
-    off -= p;
-    return s;
+    if (p >= 7) {
+      const w = (kum + p / 2) / 100 * 2 * Math.PI - Math.PI / 2;
+      const txt = modus === "p" ? Math.round(p) + "%" : kurzEur(it.value);
+      texte += `<text x="${(21 + 15.915 * Math.cos(w)).toFixed(2)}" y="${(21 + 15.915 * Math.sin(w) + 0.85).toFixed(2)}"
+        text-anchor="middle" class="dseg">${esc(txt)}</text>`;
+    }
+    off -= p; kum += p;
+  });
+  const leg = items.map(it => {
+    const p = prozRoh(it.value / total * 100);
+    return `<li><span class="ld" style="background:${it.farbe}"></span><span class="ln">${esc(it.label)}</span>
+      <span class="lv">${modus === "p" ? `<b>${p}</b> · ${eur(it.value)}` : `<b>${eur(it.value)}</b> · ${p}`}</span></li>`;
   }).join("");
-  const leg = items.map((it, i) => `<li><span class="ld" style="background:${FARBEN[i % FARBEN.length]}"></span>
-    <span class="ln">${esc(it.label)}</span><span class="lv">${eur(it.value)} · ${(it.value / total * 100).toFixed(0)} %</span></li>`).join("");
   return `<div class="donut"><svg viewBox="0 0 42 42">
-    <circle r="15.915" cx="21" cy="21" fill="none" style="stroke:var(--input)" stroke-width="5.5"/>${segs}
+    <circle r="15.915" cx="21" cy="21" fill="none" style="stroke:var(--input)" stroke-width="5.5"/>${segs}${texte}
     <text x="21" y="19.5" text-anchor="middle" class="dt1">Gesamt</text>
     <text x="21" y="24.5" text-anchor="middle" class="dt2">${esc(eur(total))}</text></svg>
     <ul class="legende">${leg}</ul></div>`;
@@ -395,12 +495,28 @@ const kpi = (l, v, d = "", kl = "") =>
 const fortschritt = (a, farbe) =>
   `<div class="bar"><div style="width:${(Math.min(Math.max(a, 0), 1) * 100).toFixed(1)}%;background:${farbe}"></div></div>`;
 const link = (url, text, kl = "btn klein sek") => `<a class="${kl}" href="${esc(url)}" target="_blank" rel="noopener">${text}</a>`;
+const ZEICHEN = {Ausgabe: "−", Einnahme: "+", Sparen: "→"}, KL = {Ausgabe: "neg", Einnahme: "pos", Sparen: ""};
 
 function ampelHTML(aus, budget) {
   const a = ampel(aus, budget);
   return `<div class="ampel"><span class="dot" style="background:${a.farbe}"></span><div>
     <div class="t">${a.text}</div><div class="s muted">${eur(aus)} von ${eur(budget)} ausgegeben (${(a.a * 100).toFixed(0)} %)</div>
     </div></div>${fortschritt(a.a, a.farbe)}`;
+}
+function buchungZeile(b) {
+  const konto = kontoLabel(b.kontoId);
+  const ziel = b.typ === "Sparen" && b.zielKontoId ? " → " + kontoLabel(b.zielKontoId) : "";
+  return `<li data-action="editBuchung" data-id="${b.id}"><div>
+    <div class="t">${esc(b.kategorie)} ${b.serie ? `<span class="badge b-blau">🔁 ${esc(b.serie)}</span>` : ""}</div>
+    <div class="s">${datumDE(b.datum)} · ${esc(b.typ)}${b.notiz ? " · " + esc(b.notiz) : ""}</div>
+    ${konto || ziel ? `<div class="s">🏦 ${esc(konto || "ohne Konto")}${esc(ziel)}</div>` : ""}</div>
+    <div class="right ${KL[b.typ] || ""}">${ZEICHEN[b.typ] || ""} ${eur(b.betrag)}</div></li>`;
+}
+function regelZeile(r) {
+  return `<li data-action="editRegel" data-id="${r.id}"><div><div class="t">${esc(r.name)}</div>
+    <div class="s">${esc(r.typ)} · ${esc(r.intervall)} · ab ${datumDE(r.start)}${r.ende ? " bis " + datumDE(r.ende) : ""}</div>
+    ${r.kontoId ? `<div class="s">🏦 ${esc(kontoLabel(r.kontoId))}</div>` : ""}
+    <div class="s">Gebucht bis: ${datumDE(r.gebuchtBis)}</div></div><div class="right">${eur(r.betrag)}</div></li>`;
 }
 
 function hinweise() {
@@ -411,7 +527,7 @@ function hinweise() {
       Trag deine Daten erst <b>danach</b> in der App auf dem Home-Bildschirm ein, denn Safari und die App speichern getrennt.</div>`;
   }
   const lb = S.einst.letztesBackup;
-  const hatDaten = S.buchungen.length + S.depot.length + S.abos.length > 0;
+  const hatDaten = S.buchungen.length + S.depot.length + S.abos.length + S.konten.length + S.banken.length > 0;
   if (hatDaten && (!lb || tageBis(lb, heute()) > 30)) {
     h += `<div class="hinweis">💾 ${lb ? `Dein letztes Backup ist vom ${datumDE(lb)}.` : "Du hast noch kein Backup gemacht."}
       <div class="btnrow"><button class="btn klein" data-action="export">Jetzt sichern</button></div></div>`;
@@ -419,13 +535,16 @@ function hinweise() {
   return h;
 }
 
-/* ================= Seiten ================= */
+/* ================= Seite: Übersicht ================= */
 function renderUebersicht() {
   const m = heute().slice(0, 7);
   const {aus} = monatswerte(m);
   const budget = +S.einst.budget, sparziel = +S.einst.sparziel;
   const gespart = gespartGesamt();
-  const ds = depotSumme(depotPositionen());
+  const items = vermoegen();
+  const gesamt = summe(items, x => x.wert);
+  const wpMitKurs = items.filter(x => x.typ === "wp" && !x.ohneKurs);
+  const gv = summe(wpMitKurs, x => x.pos.gv);
   const abos = aboDaten();
   const naechste = abos.filter(a => a.tage != null && a.tage >= 0).sort((a, b) => a.tage - b.tage).slice(0, 3);
 
@@ -433,7 +552,7 @@ function renderUebersicht() {
   h += `<div class="grid2">
     ${kpi(`Budget übrig (${MONATSNAMEN[+m.slice(5) - 1]})`, eur(budget - aus))}
     ${kpi("Gespart gesamt", eur(gespart), `${(sparziel > 0 ? gespart / sparziel * 100 : 0).toFixed(0)} % vom Sparziel`, "muted")}
-    ${kpi("Depotwert", ds.anzahl ? eur(ds.wert) : "–", ds.anzahl ? `${eur(ds.gv)} (${proz(ds.gvp)})` : "", ds.gv >= 0 ? "pos" : "neg")}
+    ${kpi("Gesamtvermögen", items.length ? eur(gesamt) : "–", wpMitKurs.length ? `Wertpapiere: ${eur(gv)}` : "", gv >= 0 ? "pos" : "neg")}
     ${kpi("Abos pro Monat", eur(summe(abos, a => a.monatlich)))}</div>`;
   h += `<div class="card"><h3>Budget-Status</h3>${ampelHTML(aus, budget)}</div>`;
   h += `<div class="card"><h3>Nächste Kündigungsfristen</h3>${naechste.length
@@ -444,9 +563,9 @@ function renderUebersicht() {
   h += `<div class="card"><h3>Schnellzugriff</h3><div class="btnrow">
     <button class="btn" data-action="neuBuchung">➕ Buchung</button>
     <button class="btn sek" data-action="tab" data-tab="cockpit">💰 Cockpit</button>
-    <button class="btn sek" data-action="tab" data-tab="depot">📈 Depot</button>
+    <button class="btn sek" data-action="tab" data-tab="banken">🏦 Banken</button>
     <button class="btn sek" data-action="tab" data-tab="abos">📑 Abos</button></div></div>`;
-  if (!S.buchungen.length && !S.depot.length && !S.abos.length) {
+  if (!S.buchungen.length && !S.depot.length && !S.abos.length && !S.banken.length) {
     h += `<div class="card"><h3>Erste Schritte</h3><p class="s muted">Noch keine Daten. Du kannst Demo-Daten laden,
       um alles auszuprobieren (über ⚙️ später wieder löschbar).</p>
       <button class="btn sek voll" data-action="demo">Demo-Daten laden</button></div>`;
@@ -454,6 +573,7 @@ function renderUebersicht() {
   return h;
 }
 
+/* ================= Seite: Cockpit ================= */
 function renderCockpit() {
   const seg = `<div class="seg">${[["uebersicht", "Übersicht"], ["eintraege", "Einträge"], ["regeln", "Wiederkehrend"]]
     .map(([k, l]) => `<button data-action="cansicht" data-ansicht="${k}" class="${UI.cockpitAnsicht === k ? "aktiv" : ""}">${l}</button>`).join("")}</div>`;
@@ -495,33 +615,24 @@ function renderCockpit() {
     [{label: "Einnahmen", farbe: "#10B981"}, {label: "Ausgaben", farbe: "#EF4444"}])}</div>`;
   return h;
 }
-
 function cockpitEintraege() {
   if (!S.buchungen.length) return `<div class="card leer">Noch keine Einträge. Tippe auf <b>+</b>.</div>`;
   const liste = [...S.buchungen].sort((a, b) => b.datum.localeCompare(a.datum));
-  const zeichen = {Ausgabe: "−", Einnahme: "+", Sparen: "→"}, kl = {Ausgabe: "neg", Einnahme: "pos", Sparen: ""};
-  return `<div class="card"><ul class="liste">${liste.map(b => `<li data-action="editBuchung" data-id="${b.id}">
-    <div><div class="t">${esc(b.kategorie)} ${b.serie ? `<span class="badge b-blau">🔁 ${esc(b.serie)}</span>` : ""}</div>
-    <div class="s">${datumDE(b.datum)} · ${esc(b.typ)}${b.notiz ? " · " + esc(b.notiz) : ""}</div></div>
-    <div class="right ${kl[b.typ] || ""}">${zeichen[b.typ] || ""} ${eur(b.betrag)}</div></li>`).join("")}</ul></div>
+  return `<div class="card"><ul class="liste">${liste.map(buchungZeile).join("")}</ul></div>
     <button class="btn sek voll" data-action="csv">⬇️ Buchungen als CSV exportieren</button>`;
 }
-
 function cockpitRegeln() {
   const h = `<div class="hinweis">Regelmäßige Zahlungen wie Miete, Gehalt oder Sparrate. Beim Öffnen der App werden
     fällige Buchungen automatisch angelegt. Tippe auf <b>+</b> für eine neue Regel.</div>`;
   if (!S.regeln.length) return h + `<div class="card leer">Noch keine Regeln.</div>`;
-  return h + `<div class="card"><ul class="liste">${S.regeln.map(r => `<li data-action="editRegel" data-id="${r.id}">
-    <div><div class="t">${esc(r.name)}</div>
-    <div class="s">${esc(r.typ)} · ${esc(r.intervall)} · ab ${datumDE(r.start)}${r.ende ? " bis " + datumDE(r.ende) : ""}</div>
-    <div class="s">Gebucht bis: ${datumDE(r.gebuchtBis)}</div></div><div class="right">${eur(r.betrag)}</div></li>`).join("")}</ul></div>`;
+  return h + `<div class="card"><ul class="liste">${S.regeln.map(regelZeile).join("")}</ul></div>`;
 }
 
+/* ================= Seite: Banken ================= */
 function indexNews() {
   return `<div class="card"><h3>🌍 Märkte & Indizes</h3><div class="btnrow">${["DAX", "S&P 500", "MSCI World", "Nasdaq", "EURO STOXX 50"]
     .map(i => link(newsUrl(i + " Börse"), esc(i) + " ↗")).join("")}</div></div>`;
 }
-
 function kursListe(t) {
   const l = [...(S.kurse[t] || [])].reverse();
   if (!l.length) return "";
@@ -529,50 +640,152 @@ function kursListe(t) {
     <ul class="liste">${l.map(k => `<li><span>${datumDE(k.datum)}</span><span>${eur(k.kurs)}
     <button class="btn klein gefahr" data-action="delKurs" data-ticker="${esc(t)}" data-datum="${k.datum}">✕</button></span></li>`).join("")}</ul></details>`;
 }
-
-function renderDepot() {
-  const pos = depotPositionen();
-  if (!pos.length) return `<div class="card leer">Noch keine Positionen. Tippe auf <b>+</b>, um deine erste Aktie
-    oder deinen ersten ETF einzutragen.</div>` + indexNews();
-  const ds = depotSumme(pos);
-  let h = "";
-  const ohne = pos.filter(p => p.kurs == null);
-  if (ohne.length) h += `<div class="hinweis">Für ${ohne.map(p => esc(p.name)).join(", ")} fehlt noch ein aktueller Kurs.
-    Tippe unten auf „Kurs eintragen“.</div>`;
-  h += `<div class="grid2">${kpi("Depotwert", eur(ds.wert))}${kpi("Einstandswert", eur(ds.einstand))}
-    ${kpi("Gewinn / Verlust", eur(ds.gv), proz(ds.gvp), ds.gv >= 0 ? "pos" : "neg")}${kpi("Positionen", pos.length)}</div>`;
-
-  const mitWert = pos.filter(p => p.wert != null);
-  h += `<div class="card"><h3>Verteilung nach Wert</h3>${donut(mitWert.map(p => ({label: p.name, value: p.wert})))}</div>`;
-  h += `<div class="card"><h3>Gewinn / Verlust je Position</h3>${balken(mitWert.map(p =>
-    ({label: p.name, werte: [{v: p.gv, farbe: p.gv >= 0 ? "#10B981" : "#EF4444"}]})))}</div>`;
-
-  if (!pos.some(p => p.ticker === UI.depotTicker)) UI.depotTicker = pos[0].ticker;
-  const sel = pos.find(p => p.ticker === UI.depotTicker);
-  h += `<div class="card"><h3>📉 Kursverlauf</h3><div class="chips">${pos.map(p =>
-    `<button class="chip ${p.ticker === sel.ticker ? "aktiv" : ""}" data-action="dticker" data-ticker="${esc(p.ticker)}">${esc(p.name)}</button>`).join("")}</div>
-    ${linie(S.kurse[sel.ticker] || [], sel.kaufkurs)}${kursListe(sel.ticker)}</div>`;
-
-  h += `<div class="card"><h3>Positionen</h3><ul class="liste">${pos.map(p => `<li class="col">
-    <div class="spread"><div><div class="t">${esc(p.name)} <span class="badge b-grau">${esc(p.typ)}</span></div>
-    <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. · Ø ${eur(p.kaufkurs)}</div>
-    <div class="s">Kurs: ${p.kurs != null ? `${eur(p.kurs)} (${datumDE(p.kursDatum)})` : "noch nicht eingetragen"}</div></div>
-    <div class="right"><div class="t">${eur(p.wert)}</div><div class="s ${p.gv >= 0 ? "pos" : "neg"}">${p.gv != null ? eur(p.gv) : ""}</div></div></div>
-    <div class="btnrow"><button class="btn klein" data-action="kurs" data-ticker="${esc(p.ticker)}">Kurs eintragen</button>
-    ${link(yahooUrl(p.ticker), "Kurs nachsehen ↗")}
-    ${link(newsUrl(`"${p.name}" ${p.typ === "ETF" ? "ETF" : "Aktie"}`), "📰 News ↗")}</div></li>`).join("")}</ul></div>`;
-
-  h += `<details class="card"><summary><b>Einzelne Käufe bearbeiten</b></summary><ul class="liste">${S.depot.map(p =>
-    `<li data-action="editPosition" data-id="${p.id}"><div><div class="t">${esc(p.name)}</div>
-    <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. à ${eur(p.kaufkurs)}</div></div><span class="muted">›</span></li>`).join("")}</ul></details>`;
-  return h + indexNews();
+function ohneKursHinweis(items) {
+  const o = items.filter(x => x.typ === "wp" && x.ohneKurs);
+  return o.length ? `<div class="hinweis">Für ${o.map(x => esc(x.name)).join(", ")} fehlt ein aktueller Kurs.
+    Dort wird vorerst der Kaufwert verwendet. Tippe in der Bank auf „Kurs eintragen“.</div>` : "";
+}
+function chartKarte(items, alle) {
+  const opt = alle ? CHART_OPTIONEN : CHART_OPTIONEN.filter(o => !o[0].startsWith("bank"));
+  let wert = alle ? UI.chart : UI.chartBank;
+  if (!opt.some(o => o[0] === wert)) wert = opt[0][0];
+  const [gruppe, modus] = wert.split("-");
+  const neg = items.some(x => x.wert < 0);
+  return `<div class="card"><h3>📊 Verteilung</h3>
+    <label class="f" style="margin-bottom:8px"><select data-change="chart">${opt.map(([k, l]) =>
+      `<option value="${k}" ${k === wert ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    ${donut(pieDaten(items, gruppe), modus)}
+    ${neg ? `<p class="s muted">Negative Salden (z. B. Kreditkarte) können im Diagramm nicht dargestellt werden. In den Summen sind sie enthalten.</p>` : ""}</div>`;
+}
+function posZeile(x) {
+  const akt = x.typ === "konto" ? `data-action="editKonto" data-id="${x.id}"` : "";
+  return `<li ${akt}><div class="reihe"><span class="ld" style="background:${farbeNr(x.fnr)}"></span>
+    <div><div class="t">${esc(x.name)}</div><div class="s">${esc(x.art)}${x.ohneKurs ? " · Kaufwert" : ""}</div></div></div>
+    <div class="right t ${x.wert < 0 ? "neg" : ""}">${eur(x.wert)}</div></li>`;
 }
 
+function renderBanken() {
+  const items = vermoegen();
+  const banken = bankSummen(items);
+  if (UI.bank !== "alle" && !banken.some(b => b.id === UI.bank)) UI.bank = "alle";
+  const gesamt = summe(items, x => x.wert);
+  let h = `<div class="chips"><button class="chip ${UI.bank === "alle" ? "aktiv" : ""}" data-action="bank" data-id="alle">Alle</button>
+    ${banken.map(b => `<button class="chip ${UI.bank === b.id ? "aktiv" : ""}" data-action="bank" data-id="${b.id}">${esc(b.name)}</button>`).join("")}
+    <button class="chip plus" data-action="neuBank">＋ Bank</button></div>`;
+  if (!banken.length) {
+    return h + `<div class="card"><h3>Noch keine Bank</h3><p class="s muted" style="margin-top:0">Lege deine erste Bank an,
+      z. B. deine Hausbank oder deinen Online-Broker. Danach fügst du dort Konten, Buchungen und Aktien hinzu.</p>
+      <button class="btn voll" data-action="neuBank">＋ Erste Bank anlegen</button></div>` + indexNews();
+  }
+  return h + (UI.bank === "alle" ? bankenAlle(items, banken, gesamt) : bankDetail(banken.find(b => b.id === UI.bank), gesamt));
+}
+
+function bankenAlle(items, banken, gesamt) {
+  const konten = items.filter(x => x.typ === "konto"), wps = items.filter(x => x.typ === "wp");
+  const mitKurs = wps.filter(x => !x.ohneKurs);
+  const gv = summe(mitKurs, x => x.pos.gv), einst = summe(mitKurs, x => x.pos.einstand);
+  let h = `<div class="grid2">${kpi("Gesamtvermögen", eur(gesamt))}${kpi("Banken", S.banken.length)}
+    ${kpi("Konten", eur(summe(konten, x => x.wert)))}
+    ${kpi("Wertpapiere", eur(summe(wps, x => x.wert)), mitKurs.length ? `${eur(gv)} (${proz(einst ? gv / einst * 100 : null)})` : "", gv >= 0 ? "pos" : "neg")}</div>`;
+  h += ohneKursHinweis(items);
+  if (items.length) h += chartKarte(items, true);
+  h += `<div class="card"><h3>🏦 Deine Banken</h3><ul class="liste">${banken.map(b => {
+    const anteil = gesamt > 0 ? b.summe / gesamt : 0;
+    return `<li class="col" data-action="bank" data-id="${b.id}"><div class="spread"><div class="reihe">
+      <span class="ld" style="background:${bankFarbe(b)};width:12px;height:12px"></span>
+      <div><div class="t">${esc(b.name)}</div><div class="s">${b.anzK} Konten · ${b.anzP} Wertpapiere</div></div></div>
+      <div class="right"><div class="t ${b.summe < 0 ? "neg" : ""}">${eur(b.summe)}</div><div class="s">${prozRoh(anteil * 100)}</div></div></div>
+      ${fortschritt(anteil, bankFarbe(b))}</li>`;
+  }).join("")}</ul></div>`;
+  if (items.length) {
+    h += `<div class="card"><h3>📋 Alle Positionen</h3>${banken.filter(b => b.items.length).map(b =>
+      `<div class="unter">${esc(b.name)} · ${eur(b.summe)}</div><ul class="liste">${b.items.map(posZeile).join("")}</ul>`).join("")}</div>`;
+  }
+  if (wps.length) h += indexNews();
+  return h;
+}
+
+function bankDetail(b, gesamt) {
+  const konten = S.konten.filter(k => k.bankId === b.id);
+  const kIds = new Set(konten.map(k => k.id));
+  let h = `<div class="card"><div class="spread"><div><div class="s muted">Summe ${esc(b.name)}</div>
+    <div style="font-size:1.6rem;font-weight:700" class="${b.summe < 0 ? "neg" : ""}">${eur(b.summe)}</div>
+    <div class="s muted">${prozRoh(gesamt > 0 ? b.summe / gesamt * 100 : 0)} deines Gesamtvermögens</div></div>
+    ${b.echt ? `<button class="btn klein sek" data-action="editBank" data-id="${b.id}">✏️ Bearbeiten</button>` : ""}</div></div>`;
+  h += ohneKursHinweis(b.items);
+  if (b.items.length) h += chartKarte(b.items, false);
+
+  if (b.echt) {
+    // Konten
+    h += `<div class="card"><h3>💳 Konten</h3>${konten.length ? `<ul class="liste">${konten.map(k => {
+      const s = kontoSaldo(k);
+      return `<li data-action="editKonto" data-id="${k.id}"><div class="reihe"><span class="ld" style="background:${farbeNr(k.fnr)}"></span>
+        <div><div class="t">${esc(k.name)}</div><div class="s">${esc(k.art)} · Startsaldo ${eur(+k.saldo)} am ${datumDE(k.stand)}</div></div></div>
+        <div class="right t ${s < 0 ? "neg" : ""}">${eur(s)}</div></li>`;
+    }).join("")}</ul>` : `<div class="leer">Noch kein Konto.</div>`}
+      <div class="btnrow"><button class="btn klein" data-action="neuKonto" data-id="${b.id}">＋ Konto</button></div></div>`;
+
+    // Einnahmen & Ausgaben
+    const m = heute().slice(0, 7);
+    const bb = S.buchungen.filter(x => kIds.has(x.kontoId) || kIds.has(x.zielKontoId));
+    const bm = bb.filter(x => x.datum.startsWith(m) && kIds.has(x.kontoId));
+    const ein = summe(bm.filter(x => x.typ === "Einnahme"), x => x.betrag);
+    const aus = summe(bm.filter(x => x.typ === "Ausgabe"), x => x.betrag);
+    const letzte = [...bb].sort((x, y) => y.datum.localeCompare(x.datum)).slice(0, 8);
+    h += `<div class="card"><h3>💶 Einnahmen & Ausgaben</h3><div class="s muted" style="margin-bottom:8px">${monatLabel(m)}</div>
+      <div class="grid2" style="margin-bottom:6px">${kpi("Einnahmen", `<span class="pos">${eur(ein)}</span>`)}${kpi("Ausgaben", `<span class="neg">${eur(aus)}</span>`)}</div>
+      ${letzte.length ? `<div class="unter">Letzte Buchungen</div><ul class="liste">${letzte.map(buchungZeile).join("")}</ul>`
+        : `<div class="leer">Noch keine Buchungen bei dieser Bank.</div>`}
+      <div class="btnrow"><button class="btn klein" data-action="neuBuchungBank" data-id="${b.id}">＋ Einnahme / Ausgabe</button></div></div>`;
+
+    // Feste Abbuchungen
+    const regeln = S.regeln.filter(r => kIds.has(r.kontoId) || kIds.has(r.zielKontoId));
+    h += `<div class="card"><h3>🔁 Feste Abbuchungen & Daueraufträge</h3>${regeln.length
+      ? `<ul class="liste">${regeln.map(regelZeile).join("")}</ul>` : `<div class="leer">Keine festen Buchungen.</div>`}
+      <div class="btnrow"><button class="btn klein" data-action="neuRegelBank" data-id="${b.id}">＋ Feste Abbuchung</button></div></div>`;
+  }
+  return h + depotBereich(b);
+}
+
+function depotBereich(b) {
+  const pos = depotPositionen().filter(p => p.bankId === b.id);
+  if (!pos.length && !b.depot) {
+    return `<div class="card"><h3>📈 Aktien & ETFs</h3><p class="s muted" style="margin-top:0">Noch keine Wertpapiere bei dieser Bank.</p>
+      <button class="btn sek voll" data-action="depotAn" data-id="${b.id}">＋ Aktien-Untergruppe hinzufügen</button></div>`;
+  }
+  let h = `<div class="card"><h3>📈 Aktien & ETFs</h3>`;
+  if (!pos.length) {
+    h += `<div class="leer">Noch keine Wertpapiere eingetragen.</div>`;
+  } else {
+    const ds = depotSumme(pos);
+    h += `<div class="grid2">${kpi("Depotwert", eur(ds.wert))}${kpi("Gewinn / Verlust", eur(ds.gv), proz(ds.gvp), ds.gv >= 0 ? "pos" : "neg")}</div>`;
+    if (!pos.some(p => p.key === UI.depotTicker)) UI.depotTicker = pos[0].key;
+    const sel = pos.find(p => p.key === UI.depotTicker);
+    h += `<div class="unter">Kursverlauf</div><div class="chips">${pos.map(p =>
+      `<button class="chip ${p.key === sel.key ? "aktiv" : ""}" data-action="dticker" data-ticker="${esc(p.key)}">${esc(p.name)}</button>`).join("")}</div>
+      ${linie(S.kurse[sel.ticker] || [], sel.kaufkurs)}${kursListe(sel.ticker)}`;
+    h += `<div class="unter">Positionen</div><ul class="liste">${pos.map(p => `<li class="col">
+      <div class="spread"><div class="reihe"><span class="ld" style="background:${farbeNr(p.fnr)}"></span><div>
+      <div class="t">${esc(p.name)} <span class="badge b-grau">${esc(p.typ)}</span></div>
+      <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. · Ø ${eur(p.kaufkurs)}</div>
+      <div class="s">Kurs: ${p.kurs != null ? `${eur(p.kurs)} (${datumDE(p.kursDatum)})` : "noch nicht eingetragen"}</div></div></div>
+      <div class="right"><div class="t">${eur(p.wert)}</div><div class="s ${p.gv >= 0 ? "pos" : "neg"}">${p.gv != null ? eur(p.gv) : ""}</div></div></div>
+      <div class="btnrow"><button class="btn klein" data-action="kurs" data-ticker="${esc(p.ticker)}">Kurs eintragen</button>
+      ${link(yahooUrl(p.ticker), "Kurs nachsehen ↗")}
+      ${link(newsUrl(`"${p.name}" ${newsZusatz(p.typ)}`), "📰 News ↗")}</div></li>`).join("")}</ul>`;
+    const kaeufe = S.depot.filter(p => bid(p.bankId) === b.id);
+    h += `<details style="margin-top:10px"><summary class="s muted">Einzelne Käufe bearbeiten (${kaeufe.length})</summary>
+      <ul class="liste">${kaeufe.map(p => `<li data-action="editPosition" data-id="${p.id}"><div><div class="t">${esc(p.name)}</div>
+      <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. à ${eur(p.kaufkurs)}</div></div><span class="muted">›</span></li>`).join("")}</ul></details>`;
+  }
+  return h + `<div class="btnrow"><button class="btn klein" data-action="neuPosition" data-id="${b.id}">＋ Aktie / ETF</button></div></div>`;
+}
+
+/* ================= Seite: Abos ================= */
 function verbraucherNews() {
   return `<div class="card"><h3>🛡️ Verbraucherschutz</h3>${link(newsUrl("Verbraucherzentrale Preiserhöhung Kündigung"),
     "Aktuelle Meldungen ↗", "btn sek voll")}</div>`;
 }
-
 function renderAbos() {
   const a = aboDaten();
   if (!a.length) return `<div class="card leer">Noch keine Verträge. Tippe auf <b>+</b>.</div>` + verbraucherNews();
@@ -606,13 +819,17 @@ function renderAbos() {
 }
 
 function render() {
-  const [t, u] = TITEL[UI.tab];
+  const inhalt = {uebersicht: renderUebersicht, cockpit: renderCockpit, banken: renderBanken, abos: renderAbos}[UI.tab]();
+  let [t, u] = TITEL[UI.tab];
+  if (UI.tab === "banken" && UI.bank !== "alle") { t = bankName(UI.bank); u = "Konten, Buchungen & Wertpapiere"; }
   $("#titel").textContent = t; $("#untertitel").textContent = u;
   document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === UI.tab));
   $("#fab").hidden = UI.tab === "uebersicht";
-  $("#app").innerHTML = {uebersicht: renderUebersicht, cockpit: renderCockpit, depot: renderDepot, abos: renderAbos}[UI.tab]();
+  $("#app").innerHTML = inhalt;
   zeigeBanner();
 }
+
+/* ===== TEIL 2 ===== */
 
 /* ================= Formulare (Bottom Sheet) ================= */
 function oeffneSheet(html) { $("#sheetInhalt").innerHTML = html; $("#sheet").hidden = false; document.body.style.overflow = "hidden"; }
@@ -626,39 +843,78 @@ const auswahl = (label, name, opt, wert) => `<label class="f">${label}<select na
   `<option ${o === wert ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`;
 const fuss = (id, aktion) => `<button class="btn voll" type="submit">Speichern</button>${id
   ? `<button type="button" class="btn gefahr voll" style="margin-top:8px" data-action="${aktion}" data-id="${id}">Löschen</button>` : ""}`;
+function kontoAuswahl(label, name, wert) {
+  const gruppen = S.banken.map(b => {
+    const ks = S.konten.filter(k => k.bankId === b.id);
+    return ks.length ? `<optgroup label="${esc(b.name)}">${ks.map(k =>
+      `<option value="${k.id}" ${k.id === wert ? "selected" : ""}>${esc(k.name)}</option>`).join("")}</optgroup>` : "";
+  }).join("");
+  return `<label class="f">${label}<select name="${name}"><option value="">– kein Konto –</option>${gruppen}</select></label>`;
+}
+function bankAuswahl(wert, ohne) {
+  return `<label class="f">Bank<select name="bankId">${ohne ? `<option value="">– ohne Bank –</option>` : ""}${S.banken.map(b =>
+    `<option value="${b.id}" ${b.id === wert ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>`;
+}
 
-function formBuchung(id) {
-  const b = S.buchungen.find(x => x.id === id) || {datum: heute(), typ: "Ausgabe", kategorie: "Lebensmittel", betrag: "", notiz: ""};
+function formBuchung(id, vorgabe = {}) {
+  const b = S.buchungen.find(x => x.id === id) ||
+    {datum: heute(), typ: "Ausgabe", kategorie: "Lebensmittel", betrag: "", notiz: "", kontoId: "", zielKontoId: "", ...vorgabe};
   oeffneSheet(`<form data-form="buchung" data-id="${id || ""}">${kopf(id ? "Eintrag bearbeiten" : "Neuer Eintrag")}
     <div class="zeile">${feld("Datum", "datum", b.datum, "date", "required")}${auswahl("Typ", "typ", TYPEN, b.typ)}</div>
     ${auswahl("Kategorie", "kategorie", KATEGORIEN, b.kategorie)}
     ${betragFeld("Betrag (€)", "betrag", b.betrag)}
+    ${kontoAuswahl("Konto (optional)", "kontoId", b.kontoId || "")}
+    <div id="zielWrap" style="${b.typ === "Sparen" ? "" : "display:none"}">${kontoAuswahl("Auf Konto (optional, z. B. Tagesgeld)", "zielKontoId", b.zielKontoId || "")}</div>
     ${feld("Notiz (optional)", "notiz", b.notiz || "")}
-    <p class="s muted">„Sparen“ = Geld, das du zur Seite legst. Es zählt für dein Sparziel.</p>
+    <p class="s muted">„Sparen“ = Geld, das du zur Seite legst. Es zählt für dein Sparziel und kann von einem Konto auf ein anderes gehen.</p>
     ${b.serie ? `<p class="s muted">Stammt aus der Regel „${esc(b.serie)}“. Gelöschte Buchungen werden nicht neu angelegt.</p>` : ""}
     ${fuss(id, "delBuchung")}</form>`);
 }
-function formRegel(id) {
+function formRegel(id, vorgabe = {}) {
   const r = S.regeln.find(x => x.id === id) || {name: "", typ: "Ausgabe", kategorie: "Miete", betrag: "",
-    intervall: "monatlich", start: heute().slice(0, 8) + "01", ende: ""};
-  oeffneSheet(`<form data-form="regel" data-id="${id || ""}">${kopf(id ? "Regel bearbeiten" : "Wiederkehrende Buchung")}
+    intervall: "monatlich", start: heute().slice(0, 8) + "01", ende: "", kontoId: "", zielKontoId: "", ...vorgabe};
+  oeffneSheet(`<form data-form="regel" data-id="${id || ""}">${kopf(id ? "Regel bearbeiten" : "Feste Buchung / Abbuchung")}
     ${feld("Name (z. B. Miete)", "name", r.name, "text", "required")}
     <div class="zeile">${auswahl("Typ", "typ", TYPEN, r.typ)}${auswahl("Kategorie", "kategorie", KATEGORIEN, r.kategorie)}</div>
     <div class="zeile">${betragFeld("Betrag (€)", "betrag", r.betrag)}${auswahl("Intervall", "intervall", Object.keys(INTERVALLE), r.intervall)}</div>
+    ${kontoAuswahl("Konto (optional)", "kontoId", r.kontoId || "")}
+    <div id="zielWrap" style="${r.typ === "Sparen" ? "" : "display:none"}">${kontoAuswahl("Auf Konto (optional)", "zielKontoId", r.zielKontoId || "")}</div>
     <div class="zeile">${feld("Erste Buchung", "start", r.start, "date", "required")}${feld("Letzte (optional)", "ende", r.ende || "", "date")}</div>
     <p class="s muted">Liegt die erste Buchung in der Vergangenheit, werden alle Buchungen bis heute nachgetragen.
     Änderungen gelten nur für künftige Buchungen.</p>${fuss(id, "delRegel")}</form>`);
 }
-function formPosition(id) {
-  const p = S.depot.find(x => x.id === id) || {name: "", ticker: "", typ: "Aktie", menge: "", kaufkurs: ""};
+function formBank(id) {
+  const b = S.banken.find(x => x.id === id) || {name: "", depot: true};
+  oeffneSheet(`<form data-form="bank" data-id="${id || ""}">${kopf(id ? "Bank bearbeiten" : "Neue Bank")}
+    ${feld("Name der Bank (z. B. Sparkasse)", "name", b.name, "text", "required")}
+    <label class="check"><input type="checkbox" name="depot" ${b.depot ? "checked" : ""}> Bereich „Aktien & ETFs“ anzeigen</label>
+    <p class="s muted">Konten, Buchungen, feste Abbuchungen und Aktien fügst du danach in der Bank über <b>+</b> hinzu.</p>
+    ${fuss(id, "delBank")}</form>`);
+}
+function formKonto(id, bankId) {
+  const k = S.konten.find(x => x.id === id) || {name: "", art: "Girokonto", bankId, saldo: "", stand: heute()};
+  oeffneSheet(`<form data-form="konto" data-id="${id || ""}">${kopf(id ? "Konto bearbeiten" : "Neues Konto")}
+    ${feld("Name (z. B. Girokonto)", "name", k.name, "text", "required")}
+    <div class="zeile">${auswahl("Art", "art", KONTO_ARTEN, k.art)}${bankAuswahl(k.bankId, false)}</div>
+    <div class="zeile">${feld("Startsaldo (€)", "saldo", (k.saldo !== "" && k.saldo != null) ? String(k.saldo).replace(".", ",") : "", "text",
+      'autocomplete="off" placeholder="z. B. 1.250,00 oder -200"')}
+    ${feld("Stand am", "stand", k.stand || heute(), "date", "required")}</div>
+    <p class="s muted">Trag den Kontostand zu Beginn dieses Tages ein. Alle Buchungen mit diesem Konto ab dem Datum werden
+    automatisch verrechnet. Weicht der Stand später ab, trag einfach einen neuen Startsaldo mit dem heutigen Datum ein.
+    IBAN oder Kontonummer sind nicht nötig.</p>
+    ${fuss(id, "delKonto")}</form>`);
+}
+function formPosition(id, bankId = "") {
+  const p = S.depot.find(x => x.id === id) || {name: "", ticker: "", typ: "Aktie", menge: "", kaufkurs: "", bankId};
   oeffneSheet(`<form data-form="position" data-id="${id || ""}">${kopf(id ? "Kauf bearbeiten" : "Neue Position / neuer Kauf")}
     ${feld("Name (für die News-Suche, z. B. SAP)", "name", p.name, "text", "required")}
     <div class="zeile">${feld("Ticker (z. B. SAP.DE)", "ticker", p.ticker, "text", 'required autocapitalize="characters" autocorrect="off"')}
-    ${auswahl("Typ", "typ", ["Aktie", "ETF"], p.typ)}</div>
+    ${auswahl("Art", "typ", WP_TYPEN, p.typ)}</div>
+    ${bankAuswahl(bid(p.bankId), true)}
     <div class="zeile">${betragFeld("Menge (Stück)", "menge", p.menge)}${betragFeld("Kaufkurs (€/Stück)", "kaufkurs", p.kaufkurs)}</div>
     ${id ? "" : betragFeld("Aktueller Kurs in € (optional)", "kurs", "")}
-    <p class="s muted">Den Ticker findest du auf finance.yahoo.com. Mehrere Käufe derselben Aktie einzeln mit gleichem Ticker eintragen,
-    sie werden automatisch zusammengefasst.</p>${fuss(id, "delPosition")}</form>`);
+    <p class="s muted">Den Ticker findest du auf finance.yahoo.com. Mehrere Käufe derselben Aktie bei derselben Bank einzeln
+    mit gleichem Ticker eintragen, sie werden automatisch zusammengefasst.</p>${fuss(id, "delPosition")}</form>`);
 }
 function formKurs(t) {
   const p = depotPositionen().find(x => x.ticker === t), lk = letzterKurs(t);
@@ -668,6 +924,13 @@ function formKurs(t) {
     ${link(yahooUrl(t), "Aktuellen Kurs nachsehen ↗", "btn sek voll")}
     <p class="s muted">Achtung: Bei US-Werten zeigt Yahoo US-Dollar. Trag den Kurs in Euro ein, z. B. die Xetra-Notierung (Ticker mit .DE).</p>
     <button class="btn voll" type="submit">Speichern</button></form>`);
+}
+function formAktionen(bankId) {
+  oeffneSheet(`${kopf("Hinzufügen zu " + esc(bankName(bankId)))}<div style="display:grid;gap:8px">
+    <button class="btn voll" data-action="neuBuchungBank" data-id="${bankId}">💶 Einnahme / Ausgabe</button>
+    <button class="btn sek voll" data-action="neuRegelBank" data-id="${bankId}">🔁 Feste Abbuchung</button>
+    <button class="btn sek voll" data-action="neuKonto" data-id="${bankId}">💳 Konto</button>
+    <button class="btn sek voll" data-action="neuPosition" data-id="${bankId}">📈 Aktie / ETF</button></div>`);
 }
 function formAbo(id) {
   const a = S.abos.find(x => x.id === id) || {name: "", anbieter: "", kategorie: "Streaming", betrag: "",
@@ -710,8 +973,10 @@ function pruefeBetrag(v, name = "Betrag") {
   return n;
 }
 function upsert(liste, id, obj) {
-  if (id) { const i = liste.findIndex(x => x.id === id); if (i >= 0) { liste[i] = {...liste[i], ...obj}; return; } }
-  liste.push({id: uid(), ...obj});
+  if (id) { const i = liste.findIndex(x => x.id === id); if (i >= 0) { liste[i] = {...liste[i], ...obj}; return id; } }
+  const neu = uid();
+  liste.push({id: neu, ...obj});
+  return neu;
 }
 function setzeKurs(t, datum, kurs) {
   const l = (S.kurse[t] = S.kurse[t] || []);
@@ -719,12 +984,24 @@ function setzeKurs(t, datum, kurs) {
   if (i >= 0) l[i].kurs = kurs; else l.push({datum, kurs});
   l.sort((a, b) => a.datum.localeCompare(b.datum));
 }
-function fertig(text) { speichern(); schliesseSheet(); render(); if (text) toast(text); }
+function entkoppeln(ids) {
+  for (const x of [...S.buchungen, ...S.regeln]) {
+    if (ids.has(x.kontoId)) x.kontoId = "";
+    if (ids.has(x.zielKontoId)) x.zielKontoId = "";
+  }
+}
+function pruefeKonten(d) {
+  const ziel = d.typ === "Sparen" ? (d.zielKontoId || "") : "";
+  if (ziel && ziel === d.kontoId) throw new Error("Konto und Ziel-Konto dürfen nicht gleich sein.");
+  return {kontoId: d.kontoId || "", zielKontoId: ziel};
+}
+function fertig(text) { sichereFarben(); speichern(); schliesseSheet(); render(); if (text) toast(text); }
 
 const SPEICHERN = {
   buchung(d, id) {
     if (!d.datum) throw new Error("Bitte ein Datum wählen.");
-    upsert(S.buchungen, id, {datum: d.datum, typ: d.typ, kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag), notiz: d.notiz.trim()});
+    upsert(S.buchungen, id, {datum: d.datum, typ: d.typ, kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag),
+      notiz: d.notiz.trim(), ...pruefeKonten(d)});
     fertig("Eintrag gespeichert");
   },
   regel(d, id) {
@@ -732,16 +1009,36 @@ const SPEICHERN = {
     if (!d.start) throw new Error("Bitte die erste Buchung angeben.");
     if (d.ende && d.ende < d.start) throw new Error("Die letzte Buchung liegt vor der ersten.");
     upsert(S.regeln, id, {name: d.name.trim(), typ: d.typ, kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag),
-      intervall: d.intervall, start: d.start, ende: d.ende || ""});
+      intervall: d.intervall, start: d.start, ende: d.ende || "", ...pruefeKonten(d)});
     const n = erzeugeWiederkehrende();
     fertig(n ? `Regel gespeichert, ${n} Buchung(en) angelegt` : "Regel gespeichert");
+  },
+  bank(d, id) {
+    const name = d.name.trim();
+    if (!name) throw new Error("Bitte einen Namen eingeben.");
+    const neu = upsert(S.banken, id, {name, depot: d.depot === "on"});
+    UI.tab = "banken"; UI.bank = neu;
+    fertig("Bank gespeichert");
+  },
+  konto(d, id) {
+    const name = d.name.trim();
+    if (!name) throw new Error("Bitte einen Namen eingeben.");
+    if (!d.bankId) throw new Error("Bitte eine Bank wählen.");
+    if (!d.stand) throw new Error("Bitte ein Datum für den Startsaldo wählen.");
+    const saldo = (d.saldo || "").trim() ? zahl(d.saldo) : 0;
+    if (isNaN(saldo)) throw new Error("Bitte einen gültigen Startsaldo eingeben, z. B. 1250,00 oder -200.");
+    upsert(S.konten, id, {bankId: d.bankId, name, art: d.art, saldo, stand: d.stand});
+    fertig("Konto gespeichert");
   },
   position(d, id) {
     const name = d.name.trim(), ticker = d.ticker.trim().toUpperCase();
     if (!name || !ticker) throw new Error("Bitte Name und Ticker eingeben.");
-    const obj = {name, ticker, typ: d.typ, menge: pruefeBetrag(d.menge, "Menge"), kaufkurs: pruefeBetrag(d.kaufkurs, "Kaufkurs")};
+    const bankId = d.bankId || "";
+    const obj = {name, ticker, typ: d.typ, bankId, menge: pruefeBetrag(d.menge, "Menge"), kaufkurs: pruefeBetrag(d.kaufkurs, "Kaufkurs")};
     const kurs = d.kurs && d.kurs.trim() ? pruefeBetrag(d.kurs, "Aktueller Kurs") : null;
     upsert(S.depot, id, obj);
+    const b = S.banken.find(x => x.id === bankId);
+    if (b) b.depot = true;
     if (kurs != null) setzeKurs(ticker, heute(), kurs);
     fertig("Position gespeichert");
   },
@@ -773,6 +1070,7 @@ const SPEICHERN = {
     if (!daten || typeof daten !== "object" || !Array.isArray(daten.buchungen)) throw new Error("Unbekanntes Backup-Format.");
     if (!confirm("Aktuelle Daten durch das Backup ersetzen?")) return;
     S = zusammenfuehren(daten);
+    UI.bank = "alle";
     wendeThemeAn(); erzeugeWiederkehrende(); verlaengereAbos();
     fertig("Backup importiert");
   },
@@ -808,18 +1106,26 @@ async function backupKopieren() {
   catch (e) { const t = $("#backupText"); if (t) { t.removeAttribute("readonly"); t.focus(); t.select(); } toast("Bitte Text markieren und kopieren"); }
 }
 function csvExport() {
-  const z = [["Datum", "Typ", "Kategorie", "Betrag", "Notiz", "Serie"]].concat([...S.buchungen]
+  const z = [["Datum", "Typ", "Kategorie", "Betrag", "Konto", "Auf Konto", "Notiz", "Serie"]].concat([...S.buchungen]
     .sort((a, b) => a.datum.localeCompare(b.datum))
-    .map(b => [datumDE(b.datum), b.typ, b.kategorie, String(b.betrag).replace(".", ","), b.notiz || "", b.serie || ""]));
+    .map(b => [datumDE(b.datum), b.typ, b.kategorie, String(b.betrag).replace(".", ","), kontoLabel(b.kontoId),
+      kontoLabel(b.zielKontoId), b.notiz || "", b.serie || ""]));
   const csv = "\uFEFF" + z.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
   teileDatei(csv, `buchungen-${heute()}.csv`, "text/csv");
 }
 function demoLaden() {
-  if ((S.buchungen.length || S.depot.length || S.abos.length) && !confirm("Demo-Daten zu deinen vorhandenen Daten hinzufügen?")) return;
-  const h = heute(), m0 = h.slice(0, 7) + "-01";
+  if ((S.buchungen.length || S.depot.length || S.abos.length || S.banken.length) &&
+      !confirm("Demo-Daten zu deinen vorhandenen Daten hinzufügen?")) return;
+  const h = heute(), m0 = h.slice(0, 7) + "-01", start = addMonate(m0, -5);
+  const b1 = {id: uid(), name: "Hausbank (Demo)", depot: false}, b2 = {id: uid(), name: "Online-Bank (Demo)", depot: true};
+  S.banken.push(b1, b2);
+  const giro = {id: uid(), bankId: b1.id, name: "Girokonto", art: "Girokonto", saldo: 1200, stand: start};
+  const tg = {id: uid(), bankId: b2.id, name: "Tagesgeld", art: "Tagesgeld", saldo: 3000, stand: start};
+  S.konten.push(giro, tg);
   const add = (mo, tag, typ, kat, betrag) => {
     const d = addMonate(m0, -mo).slice(0, 8) + pad(tag);
-    if (d <= h) S.buchungen.push({id: uid(), datum: d, typ, kategorie: kat, betrag, notiz: "Demo"});
+    if (d <= h) S.buchungen.push({id: uid(), datum: d, typ, kategorie: kat, betrag, notiz: "Demo",
+      kontoId: giro.id, zielKontoId: typ === "Sparen" ? tg.id : ""});
   };
   for (let mo = 0; mo < 6; mo++) {
     add(mo, 1, "Einnahme", "Gehalt", 2800); add(mo, 2, "Ausgabe", "Miete", 850);
@@ -827,14 +1133,17 @@ function demoLaden() {
     add(mo, 9, "Ausgabe", "Freizeit", 60 + mo * 10); add(mo, 15, "Ausgabe", "Mobilität", 49);
     add(mo, 3, "Sparen", "Sonstiges", 300);
   }
-  S.depot.push({id: uid(), name: "Beispiel AG", ticker: "DEMO1", typ: "Aktie", menge: 10, kaufkurs: 100},
-               {id: uid(), name: "Beispiel World ETF", ticker: "DEMO2", typ: "ETF", menge: 25, kaufkurs: 80});
+  S.regeln.push({id: uid(), name: "Handy (Demo)", typ: "Ausgabe", kategorie: "Abos", betrag: 29.99, intervall: "monatlich",
+    start: start.slice(0, 8) + "20", ende: "", kontoId: giro.id, zielKontoId: ""});
+  S.depot.push({id: uid(), name: "Beispiel AG", ticker: "DEMO1", typ: "Aktie", bankId: b2.id, menge: 10, kaufkurs: 100},
+               {id: uid(), name: "Beispiel World ETF", ticker: "DEMO2", typ: "ETF", bankId: b2.id, menge: 25, kaufkurs: 80});
   [[-90, 95], [-60, 104], [-30, 110], [0, 116]].forEach(([t, k]) => setzeKurs("DEMO1", addTage(h, t), k));
   [[-90, 81], [-60, 84], [-30, 79], [0, 88]].forEach(([t, k]) => setzeKurs("DEMO2", addTage(h, t), k));
   S.abos.push(
     {id: uid(), name: "Streaming-Abo", anbieter: "Netflix", kategorie: "Streaming", betrag: 12.99, intervall: "monatlich", vertragsende: "", frist: 0, verlaengerung: 0},
     {id: uid(), name: "Handyvertrag", anbieter: "Telekom", kategorie: "Mobilfunk & Internet", betrag: 29.99, intervall: "monatlich", vertragsende: addTage(h, 45), frist: 30, verlaengerung: 12},
     {id: uid(), name: "Haftpflicht", anbieter: "Beispiel-Versicherung", kategorie: "Versicherung", betrag: 65, intervall: "jährlich", vertragsende: addTage(h, 150), frist: 90, verlaengerung: 12});
+  erzeugeWiederkehrende();
   fertig("Demo-Daten geladen (fiktive Werte)");
 }
 
@@ -870,6 +1179,13 @@ function loeschen(liste, id, name) {
   S[liste] = S[liste].filter(x => x.id !== id);
   fertig(name + " gelöscht");
 }
+function ersteKonto(bankId) { const k = S.konten.find(x => x.bankId === bankId); return k ? k.id : ""; }
+function brauchtKonto(bankId) {
+  if (ersteKonto(bankId)) return false;
+  alert("Lege zuerst ein Konto bei dieser Bank an, z. B. dein Girokonto.");
+  formKonto(null, bankId);
+  return true;
+}
 const AKTIONEN = {
   tab: el => { UI.tab = el.dataset.tab; window.scrollTo(0, 0); render(); },
   theme: () => wechsleTheme(),
@@ -877,11 +1193,51 @@ const AKTIONEN = {
   schliessen: () => schliesseSheet(),
   neu: () => {
     if (UI.tab === "cockpit") UI.cockpitAnsicht === "regeln" ? formRegel() : formBuchung();
-    else if (UI.tab === "depot") formPosition();
     else if (UI.tab === "abos") formAbo();
+    else if (UI.tab === "banken") {
+      if (UI.bank === "alle") formBank();
+      else if (UI.bank === "") formPosition(null, "");
+      else formAktionen(UI.bank);
+    }
   },
   neuBuchung: () => formBuchung(),
   cansicht: el => { UI.cockpitAnsicht = el.dataset.ansicht; render(); },
+  bank: el => { UI.bank = el.dataset.id; window.scrollTo(0, 0); render(); },
+  neuBank: () => formBank(),
+  editBank: el => formBank(el.dataset.id),
+  delBank: el => {
+    const id = el.dataset.id;
+    const nk = S.konten.filter(k => k.bankId === id), np = S.depot.filter(p => p.bankId === id).length;
+    if (!confirm(`Bank löschen? Dabei werden ${nk.length} Konto/Konten und ${np} Wertpapier-Käufe gelöscht. ` +
+      "Buchungen bleiben im Cockpit erhalten.")) return;
+    S.konten = S.konten.filter(k => k.bankId !== id);
+    S.depot = S.depot.filter(p => p.bankId !== id);
+    S.banken = S.banken.filter(b => b.id !== id);
+    entkoppeln(new Set(nk.map(k => k.id)));
+    UI.bank = "alle";
+    fertig("Bank gelöscht");
+  },
+  depotAn: el => { const b = S.banken.find(x => x.id === el.dataset.id); if (b) { b.depot = true; speichern(); render(); } },
+  neuKonto: el => formKonto(null, el.dataset.id),
+  editKonto: el => formKonto(el.dataset.id),
+  delKonto: el => {
+    const id = el.dataset.id;
+    if (!confirm("Konto löschen? Die Buchungen bleiben im Cockpit erhalten, sind dann aber keinem Konto mehr zugeordnet.")) return;
+    S.konten = S.konten.filter(k => k.id !== id);
+    entkoppeln(new Set([id]));
+    fertig("Konto gelöscht");
+  },
+  neuBuchungBank: el => {
+    const bankId = el.dataset.id;
+    if (brauchtKonto(bankId)) return;
+    formBuchung(null, {kontoId: ersteKonto(bankId)});
+  },
+  neuRegelBank: el => {
+    const bankId = el.dataset.id;
+    if (brauchtKonto(bankId)) return;
+    formRegel(null, {kontoId: ersteKonto(bankId)});
+  },
+  neuPosition: el => formPosition(null, el.dataset.id || ""),
   dticker: el => { UI.depotTicker = el.dataset.ticker; render(); },
   editBuchung: el => formBuchung(el.dataset.id),
   editRegel: el => formRegel(el.dataset.id),
@@ -912,6 +1268,7 @@ const AKTIONEN = {
     if (!confirm("Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden.")) return;
     const theme = S.einst.theme;
     S = STANDARD(); S.einst.theme = theme;
+    UI.bank = "alle";
     fertig("Alle Daten gelöscht");
   },
 };
@@ -924,7 +1281,17 @@ document.addEventListener("click", e => {
   if (f) { e.preventDefault(); f(el); }
 });
 document.addEventListener("change", e => {
-  if (e.target.dataset.change === "monat") { UI.monat = e.target.value; render(); }
+  const t = e.target;
+  if (t.dataset.change === "monat") { UI.monat = t.value; render(); return; }
+  if (t.dataset.change === "chart") {
+    if (UI.bank === "alle") UI.chart = t.value; else UI.chartBank = t.value;
+    render(); return;
+  }
+  // Ziel-Konto nur bei "Sparen" anzeigen
+  if (t.name === "typ" && t.form) {
+    const w = t.form.querySelector("#zielWrap");
+    if (w) w.style.display = t.value === "Sparen" ? "" : "none";
+  }
 });
 document.addEventListener("submit", async e => {
   const form = e.target.closest("form[data-form]");
@@ -944,6 +1311,7 @@ document.addEventListener("visibilitychange", () => {
 
 /* ================= Start ================= */
 laden();
+if (sichereFarben()) speichern();
 wendeThemeAn();
 const neueBuchungen = erzeugeWiederkehrende();
 verlaengereAbos();
