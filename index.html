@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanzen">
+<meta name="theme-color" content="#1E3A8A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Finanz-Dashboard</title>
+<style>
+:root{--bg:#F5F7FB;--card:#FFFFFF;--text:#0F172A;--muted:#64748B;--border:#E2E8F0;--input:#F1F5F9;
+  --primary:#2563EB;--green:#10B981;--yellow:#F59E0B;--red:#EF4444;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="hell"]){--bg:#0B1220;--card:#131C2E;--text:#E2E8F0;
+  --muted:#94A3B8;--border:#22304A;--input:#1A2438;color-scheme:dark}}
+:root[data-theme="dunkel"]{--bg:#0B1220;--card:#131C2E;--text:#E2E8F0;--muted:#94A3B8;--border:#22304A;
+  --input:#1A2438;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;font-size:16px}
+body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+.hero{background:linear-gradient(135deg,#1E3A8A,#2563EB 60%,#38BDF8);color:#fff;
+  padding:calc(14px + env(safe-area-inset-top)) 18px 22px;display:flex;justify-content:space-between;
+  align-items:flex-start;border-radius:0 0 22px 22px;box-shadow:0 10px 25px -12px rgba(37,99,235,.6)}
+.hero h1{margin:0;font-size:1.6rem}
+.hero p{margin:4px 0 0;opacity:.85;font-size:.9rem}
+.hero-btns{display:flex;gap:8px}
+.icon-btn{background:rgba(255,255,255,.18);border:0;color:#fff;width:42px;height:42px;border-radius:12px;font-size:1.15rem}
+main{padding:14px;max-width:700px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:1rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;min-width:0}
+.kpi .l{color:var(--muted);font-size:.78rem}
+.kpi .v{font-weight:700;font-size:1.1rem;margin-top:4px;overflow-wrap:anywhere}
+.kpi .d{font-size:.76rem;margin-top:3px}
+.pos{color:var(--green)}.neg{color:var(--red)}.muted{color:var(--muted)}
+.t{font-weight:600}.s{font-size:.8rem}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ampel{display:flex;gap:12px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 5px rgba(128,128,128,.15)}
+.bar{height:10px;background:var(--input);border-radius:6px;overflow:hidden;margin-top:10px}
+.bar>div{height:100%;border-radius:6px}
+.seg{display:flex;background:var(--input);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);padding:9px 4px;border-radius:9px;font-size:.85rem}
+.seg button.aktiv{background:var(--card);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.liste{list-style:none;margin:0;padding:0}
+.liste li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.liste li:last-child{border-bottom:0}
+.liste li.col{flex-direction:column;align-items:stretch}
+.liste .s{color:var(--muted)}
+.right{text-align:right;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.b-rot{background:rgba(239,68,68,.15);color:var(--red)}
+.b-gelb{background:rgba(245,158,11,.18);color:#B45309}
+.b-gruen{background:rgba(16,185,129,.15);color:var(--green)}
+.b-orange{background:rgba(249,115,22,.15);color:#EA580C}
+.b-grau{background:rgba(100,116,139,.15);color:var(--muted)}
+.b-blau{background:rgba(37,99,235,.15);color:var(--primary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;
+  padding:11px 14px;font-size:.95rem;font-weight:600;background:var(--primary);color:#fff;text-decoration:none;font-family:inherit}
+.btn.sek{background:var(--input);color:var(--text)}
+.btn.gefahr{background:rgba(239,68,68,.15);color:var(--red)}
+.btn.klein{padding:7px 10px;font-size:.8rem;border-radius:10px}
+.btn.voll{width:100%}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fab{position:fixed;right:18px;bottom:calc(86px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;
+  border:0;background:var(--primary);color:#fff;font-size:2rem;line-height:1;box-shadow:0 8px 20px -6px rgba(37,99,235,.7);z-index:20}
+.fab[hidden]{display:none}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom);z-index:30}
+.tabbar button{flex:1;border:0;background:transparent;color:var(--muted);padding:8px 0 6px;font-size:1.25rem;
+  display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabbar button span{font-size:.68rem}
+.tabbar button.aktiv{color:var(--primary)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:flex-end}
+.sheet-bg[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:700px;margin:0 auto;max-height:90vh;overflow-y:auto;
+  border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));animation:hoch .22s ease-out}
+@keyframes hoch{from{transform:translateY(100%)}to{transform:none}}
+.sheet h2{margin:0 0 14px;font-size:1.2rem;display:flex;justify-content:space-between;align-items:center}
+.sheet h3{margin:0 0 6px;font-size:1rem}
+.x{background:var(--input);border:0;color:var(--text);width:34px;height:34px;border-radius:50%;font-size:1rem}
+label.f{display:block;margin-bottom:12px;font-size:.8rem;color:var(--muted)}
+label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:5px;padding:11px 12px;font-size:16px;
+  min-height:46px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);font-family:inherit}
+.zeile{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.leer{color:var(--muted);text-align:center;padding:18px 6px;font-size:.9rem}
+.warn{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);border-radius:14px;padding:12px;margin-bottom:10px;font-size:.9rem}
+.hinweis{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:14px;padding:12px;margin-bottom:12px;font-size:.88rem}
+.chart{width:100%;height:auto;display:block}
+svg text{fill:var(--muted)}
+.donut svg{width:190px;height:190px;display:block;margin:0 auto}
+.donut .dt1{font-size:3px}
+.donut .dt2{font-size:3.6px;font-weight:700;fill:var(--text)}
+.legende{list-style:none;padding:0;margin:12px 0 0}
+.legende li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:.88rem}
+.ld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ln{flex:1}.lv{color:var(--muted);font-size:.8rem}
+.minileg{display:flex;gap:14px;justify-content:center;font-size:.8rem;color:var(--muted);margin-top:6px}
+.minileg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.hb{margin-bottom:10px}.hb .bar{margin-top:5px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.chip{border:1px solid var(--border);background:var(--card);color:var(--text);padding:7px 12px;border-radius:20px;white-space:nowrap;font-size:.85rem}
+.chip.aktiv{background:var(--primary);color:#fff;border-color:var(--primary)}
+details summary{cursor:pointer;padding:4px 0}
+.trenner{border:0;border-top:1px solid var(--border);margin:18px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top));background:#0F172A;
+  color:#fff;padding:10px 16px;border-radius:12px;z-index:100;font-size:.9rem;transition:opacity .4s;
+  box-shadow:0 8px 20px -8px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast.weg{opacity:0}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div><h1 id="titel">Übersicht</h1><p id="untertitel"></p></div>
+  <div class="hero-btns">
+    <button class="icon-btn" data-action="theme" id="themeBtn" aria-label="Design wechseln">🌓</button>
+    <button class="icon-btn" data-action="einstellungen" aria-label="Einstellungen">⚙️</button>
+  </div>
+</header>
+<div id="banner"></div>
+<main id="app"></main>
+<button id="fab" class="fab" data-action="neu" aria-label="Neu">+</button>
+<nav class="tabbar">
+  <button data-action="tab" data-tab="uebersicht">🏠<span>Übersicht</span></button>
+  <button data-action="tab" data-tab="cockpit">💰<span>Cockpit</span></button>
+  <button data-action="tab" data-tab="depot">📈<span>Depot</span></button>
+  <button data-action="tab" data-tab="abos">📑<span>Abos</span></button>
+</nav>
+<div id="sheet" class="sheet-bg" hidden><div class="sheet" id="sheetInhalt"></div></div>
+
+<script>
+"use strict";
+/* ================= Konstanten ================= */
+const SPEICHER_KEY = "finanzDashboard_v1";
+const TYPEN = ["Ausgabe", "Einnahme", "Sparen"];
+const KATEGORIEN = ["Gehalt", "Miete", "Lebensmittel", "Mobilität", "Freizeit",
+  "Versicherung", "Abos", "Gesundheit", "Shopping", "Sonstiges"];
+const ABO_KATEGORIEN = ["Streaming", "Versicherung", "Strom & Gas", "Mobilfunk & Internet",
+  "Fitness", "Software", "Sonstiges"];
+const INTERVALLE = {"monatlich": 1, "vierteljährlich": 3, "halbjährlich": 6, "jährlich": 12};
+const FARBEN = ["#2563EB", "#10B981", "#F59E0B", "#8B5CF6", "#06B6D4", "#EF4444", "#64748B", "#EC4899"];
+const MONATSNAMEN = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+  "August", "September", "Oktober", "November", "Dezember"];
+const TITEL = {
+  uebersicht: ["Übersicht", "Alles Wichtige auf einen Blick"],
+  cockpit: ["Finanz-Cockpit", "Einnahmen, Ausgaben, Budget & Sparziel"],
+  depot: ["Depot", "Aktien & ETFs mit Kursverlauf und News"],
+  abos: ["Abos & Verträge", "Kosten und Kündigungsfristen"],
+};
+const THEMES = ["auto", "hell", "dunkel"];
+const THEME_NAMEN = {auto: "Automatisch", hell: "Hell", dunkel: "Dunkel"};
+const THEME_ICON = {auto: "🌓", hell: "☀️", dunkel: "🌙"};
+
+/* ================= Hilfsfunktionen ================= */
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2, "0");
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const euroFmt = new Intl.NumberFormat("de-DE", {style: "currency", currency: "EUR"});
+const eur = x => (x == null || isNaN(x)) ? "–" : euroFmt.format(x);
+const proz = x => (x == null || !isFinite(x)) ? "–" : (x > 0 ? "+" : "") + x.toFixed(1).replace(".", ",") + " %";
+const fmtZahl = n => Number(n).toLocaleString("de-DE", {maximumFractionDigits: 4});
+const summe = (arr, f) => arr.reduce((s, x) => s + (+f(x) || 0), 0);
+
+function heute() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function datumDE(s) { if (!s) return "–"; const [y, m, d] = s.split("-"); return `${d}.${m}.${y}`; }
+function monatLabel(m) { return MONATSNAMEN[+m.slice(5, 7) - 1] + " " + m.slice(0, 4); }
+function addMonate(s, n) {
+  const [y, m, d] = s.split("-").map(Number);
+  const t = (m - 1) + n, ny = y + Math.floor(t / 12), nm = ((t % 12) + 12) % 12;
+  const max = new Date(ny, nm + 1, 0).getDate();
+  return `${ny}-${pad(nm + 1)}-${pad(Math.min(d, max))}`;
+}
+function addTage(s, n) {
+  const [y, m, d] = s.split("-").map(Number);
+  const x = new Date(y, m - 1, d + n);
+  return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`;
+}
+function tageBis(von, bis) {
+  const a = von.split("-").map(Number), b = bis.split("-").map(Number);
+  return Math.round((Date.UTC(b[0], b[1] - 1, b[2]) - Date.UTC(a[0], a[1] - 1, a[2])) / 86400000);
+}
+function vormonat(m) { return addMonate(m + "-01", -1).slice(0, 7); }
+function zahl(v) {
+  let s = String(v ?? "").trim().replace(/\s/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  const n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
+
+/* ================= Daten ================= */
+const STANDARD = () => ({
+  buchungen: [], regeln: [], depot: [], kurse: {}, abos: [],
+  einst: {budget: 1500, sparziel: 5000, theme: "auto", letztesBackup: null},
+});
+let S = STANDARD();
+let speicherOK = true;
+const UI = {tab: "uebersicht", monat: heute().slice(0, 7), cockpitAnsicht: "uebersicht", depotTicker: null};
+
+function zusammenfuehren(d) {
+  return {...STANDARD(), ...d, einst: {...STANDARD().einst, ...(d.einst || {})}};
+}
+function laden() {
+  try {
+    const roh = localStorage.getItem(SPEICHER_KEY);
+    if (roh) S = zusammenfuehren(JSON.parse(roh));
+  } catch (e) { speicherOK = false; }
+}
+function speichern() {
+  try { localStorage.setItem(SPEICHER_KEY, JSON.stringify(S)); }
+  catch (e) { speicherOK = false; zeigeBanner(); }
+}
+
+/* ================= Automatik ================= */
+function erzeugeWiederkehrende() {
+  const h = heute();
+  let n = 0;
+  for (const r of S.regeln) {
+    const schritt = INTERVALLE[r.intervall];
+    if (!r.start || !schritt) continue;
+    const grenze = (r.ende && r.ende < h) ? r.ende : h;
+    for (let k = 0; k < 1200; k++) {
+      const d = addMonate(r.start, k * schritt);   // immer vom Start aus, damit der 31. nicht wandert
+      if (d > grenze) break;
+      if (!r.gebuchtBis || d > r.gebuchtBis) {
+        S.buchungen.push({id: uid(), datum: d, typ: r.typ, kategorie: r.kategorie,
+          betrag: +r.betrag, notiz: "Automatisch", serie: r.name});
+        r.gebuchtBis = d;
+        n++;
+      }
+    }
+  }
+  if (n) speichern();
+  return n;
+}
+function verlaengereAbos() {
+  const h = heute();
+  let geaendert = false;
+  for (const a of S.abos) {
+    const v = +a.verlaengerung || 0;
+    let sicher = 0;
+    while (a.vertragsende && v > 0 && a.vertragsende < h && sicher++ < 600) {
+      a.vertragsende = addMonate(a.vertragsende, v);
+      geaendert = true;
+    }
+  }
+  if (geaendert) speichern();
+  return geaendert;
+}
+
+/* ================= Berechnungen ================= */
+function monatswerte(m) {
+  const b = S.buchungen.filter(x => x.datum.startsWith(m));
+  const f = t => summe(b.filter(x => x.typ === t), x => x.betrag);
+  return {ein: f("Einnahme"), aus: f("Ausgabe"), spar: f("Sparen")};
+}
+const gespartGesamt = () => summe(S.buchungen.filter(x => x.typ === "Sparen"), x => x.betrag);
+function ampel(aus, budget) {
+  const a = budget > 0 ? aus / budget : 0;
+  if (a < 0.8) return {a, farbe: "var(--green)", text: "Im grünen Bereich"};
+  if (a <= 1) return {a, farbe: "var(--yellow)", text: "Achtung: Budget fast aufgebraucht"};
+  return {a, farbe: "var(--red)", text: "Budget überschritten"};
+}
+function letzterKurs(t) {
+  const k = S.kurse[t];
+  if (!k || !k.length) return null;
+  const s = [...k].sort((a, b) => a.datum.localeCompare(b.datum));
+  return s[s.length - 1];
+}
+function depotPositionen() {
+  const map = new Map();
+  for (const p of S.depot) {
+    if (!map.has(p.ticker)) map.set(p.ticker, {ticker: p.ticker, name: p.name, typ: p.typ, menge: 0, einstand: 0});
+    const m = map.get(p.ticker);
+    m.menge += +p.menge; m.einstand += p.menge * p.kaufkurs;
+  }
+  return [...map.values()].map(m => {
+    const lk = letzterKurs(m.ticker);
+    const kurs = lk ? lk.kurs : null;
+    const wert = kurs != null ? m.menge * kurs : null;
+    return {...m, kaufkurs: m.menge > 0 ? m.einstand / m.menge : null, kurs,
+      kursDatum: lk ? lk.datum : null, wert, gv: wert != null ? wert - m.einstand : null};
+  });
+}
+function depotSumme(pos) {
+  const g = pos.filter(p => p.wert != null);
+  const wert = summe(g, p => p.wert), einstand = summe(g, p => p.einstand);
+  return {wert, einstand, gv: wert - einstand, gvp: einstand ? (wert - einstand) / einstand * 100 : null, anzahl: g.length};
+}
+function aboDaten() {
+  const h = heute();
+  return S.abos.map(a => {
+    const monatlich = a.betrag / (INTERVALLE[a.intervall] || 1);
+    const kb = a.vertragsende ? addTage(a.vertragsende, -(+a.frist || 0)) : null;
+    const tage = kb ? tageBis(h, kb) : null;
+    let status;
+    if (tage == null) status = {t: "Unbefristet", k: "b-grau"};
+    else if (tage < 0) status = {t: "Frist verstrichen", k: "b-orange"};
+    else if (tage <= 30) status = {t: "Dringend", k: "b-rot"};
+    else if (tage <= 90) status = {t: "Bald", k: "b-gelb"};
+    else status = {t: "Ok", k: "b-gruen"};
+    return {...a, monatlich, jaehrlich: monatlich * 12, kuendigenBis: kb, tage, status};
+  });
+}
+const newsUrl = q => "https://news.google.com/search?q=" + encodeURIComponent(q) + "&hl=de&gl=DE&ceid=DE:de";
+const yahooUrl = t => "https://finance.yahoo.com/quote/" + encodeURIComponent(t);
+
+/* ================= Diagramme (eigenes SVG, keine externen Bibliotheken) ================= */
+function donut(items) {
+  items = items.filter(i => i.value > 0).sort((a, b) => b.value - a.value);
+  const total = summe(items, i => i.value);
+  if (!total) return `<div class="leer">Noch keine Daten</div>`;
+  let off = 25;
+  const segs = items.map((it, i) => {
+    const p = it.value / total * 100;
+    const s = `<circle r="15.915" cx="21" cy="21" fill="none" stroke="${FARBEN[i % FARBEN.length]}" stroke-width="5.5"
+      stroke-dasharray="${p.toFixed(3)} ${(100 - p).toFixed(3)}" stroke-dashoffset="${off.toFixed(3)}"/>`;
+    off -= p;
+    return s;
+  }).join("");
+  const leg = items.map((it, i) => `<li><span class="ld" style="background:${FARBEN[i % FARBEN.length]}"></span>
+    <span class="ln">${esc(it.label)}</span><span class="lv">${eur(it.value)} · ${(it.value / total * 100).toFixed(0)} %</span></li>`).join("");
+  return `<div class="donut"><svg viewBox="0 0 42 42">
+    <circle r="15.915" cx="21" cy="21" fill="none" style="stroke:var(--input)" stroke-width="5.5"/>${segs}
+    <text x="21" y="19.5" text-anchor="middle" class="dt1">Gesamt</text>
+    <text x="21" y="24.5" text-anchor="middle" class="dt2">${esc(eur(total))}</text></svg>
+    <ul class="legende">${leg}</ul></div>`;
+}
+
+function balken(gruppen, legende) {
+  if (!gruppen.length) return `<div class="leer">Noch keine Daten</div>`;
+  const W = 320, H = 190, oben = 16, unten = H - 26;
+  const alle = gruppen.flatMap(g => g.werte.map(w => w.v));
+  const max = Math.max(0, ...alle), min = Math.min(0, ...alle), spanne = (max - min) || 1;
+  const y = v => oben + (max - v) / spanne * (unten - oben);
+  const gw = (W - 10) / gruppen.length;
+  let s = "";
+  gruppen.forEach((g, i) => {
+    const n = g.werte.length, bw = Math.min(26, (gw - 10) / n), x0 = 5 + i * gw + (gw - bw * n) / 2;
+    g.werte.forEach((w, j) => {
+      const y1 = y(Math.max(w.v, 0)), y2 = y(Math.min(w.v, 0));
+      s += `<rect x="${(x0 + j * bw + 1).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(bw - 2, 1).toFixed(1)}"
+        height="${Math.max(y2 - y1, 0.5).toFixed(1)}" rx="3" fill="${w.farbe}"/>`;
+    });
+    const lab = g.label.length > 9 ? g.label.slice(0, 8) + "…" : g.label;
+    s += `<text x="${(5 + i * gw + gw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle" font-size="10">${esc(lab)}</text>`;
+  });
+  s += `<line x1="5" x2="${W - 5}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" style="stroke:var(--border)"/>`;
+  s += `<text x="5" y="10" font-size="9">max. ${esc(eur(max))}</text>`;
+  const leg = legende ? `<div class="minileg">${legende.map(l =>
+    `<span><i style="background:${l.farbe}"></i>${esc(l.label)}</span>`).join("")}</div>` : "";
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart">${s}</svg>${leg}`;
+}
+
+function hBalken(items) {
+  const max = Math.max(0, ...items.map(i => i.value)) || 1;
+  return items.map(i => `<div class="hb"><div class="spread"><span>${esc(i.label)}</span><b>${eur(i.value)}</b></div>
+    <div class="bar"><div style="width:${(i.value / max * 100).toFixed(1)}%;background:var(--primary)"></div></div></div>`).join("");
+}
+
+function linie(punkte, ref) {
+  const p = [...punkte].sort((a, b) => a.datum.localeCompare(b.datum));
+  if (p.length < 2) return `<div class="leer">Für ein Diagramm mindestens 2 Kurse eintragen (Button „Kurs eintragen“).</div>`;
+  const W = 320, H = 200, l = 8, r = 8, o = 16, u = H - 24;
+  const ts = p.map(x => Date.parse(x.datum)), t0 = ts[0], t1 = ts[ts.length - 1], tsp = (t1 - t0) || 1;
+  const werte = p.map(x => x.kurs).concat(ref != null ? [ref] : []);
+  let max = Math.max(...werte), min = Math.min(...werte);
+  const puffer = (max - min) * 0.1 || max * 0.05 || 1; max += puffer; min -= puffer;
+  const X = t => l + (t - t0) / tsp * (W - l - r), Y = v => o + (max - v) / (max - min) * (u - o);
+  const pts = p.map((x, i) => `${X(ts[i]).toFixed(1)},${Y(x.kurs).toFixed(1)}`).join(" ");
+  let s = `<polygon points="${X(t0).toFixed(1)},${u} ${pts} ${X(t1).toFixed(1)},${u}" fill="rgba(37,99,235,.12)"/>
+    <polyline points="${pts}" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round"/>`;
+  s += p.map((x, i) => `<circle cx="${X(ts[i]).toFixed(1)}" cy="${Y(x.kurs).toFixed(1)}" r="2.6" fill="#2563EB"/>`).join("");
+  if (ref != null) {
+    s += `<line x1="${l}" x2="${W - r}" y1="${Y(ref).toFixed(1)}" y2="${Y(ref).toFixed(1)}" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="${W - r}" y="${(Y(ref) - 4).toFixed(1)}" text-anchor="end" font-size="9" style="fill:#F59E0B">Ø Kaufkurs ${esc(eur(ref))}</text>`;
+  }
+  s += `<text x="${l}" y="${H - 6}" font-size="10">${datumDE(p[0].datum)}</text>
+    <text x="${W - r}" y="${H - 6}" font-size="10" text-anchor="end">${datumDE(p[p.length - 1].datum)}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart">${s}</svg>`;
+}
+
+/* ================= Bausteine ================= */
+const kpi = (l, v, d = "", kl = "") =>
+  `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${d ? `<div class="d ${kl}">${d}</div>` : ""}</div>`;
+const fortschritt = (a, farbe) =>
+  `<div class="bar"><div style="width:${(Math.min(Math.max(a, 0), 1) * 100).toFixed(1)}%;background:${farbe}"></div></div>`;
+const link = (url, text, kl = "btn klein sek") => `<a class="${kl}" href="${esc(url)}" target="_blank" rel="noopener">${text}</a>`;
+
+function ampelHTML(aus, budget) {
+  const a = ampel(aus, budget);
+  return `<div class="ampel"><span class="dot" style="background:${a.farbe}"></span><div>
+    <div class="t">${a.text}</div><div class="s muted">${eur(aus)} von ${eur(budget)} ausgegeben (${(a.a * 100).toFixed(0)} %)</div>
+    </div></div>${fortschritt(a.a, a.farbe)}`;
+}
+
+function hinweise() {
+  let h = "";
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (ios && !navigator.standalone) {
+    h += `<div class="hinweis"><b>Tipp:</b> Tippe in Safari auf <b>Teilen → Zum Home-Bildschirm</b>.
+      Trag deine Daten erst <b>danach</b> in der App auf dem Home-Bildschirm ein, denn Safari und die App speichern getrennt.</div>`;
+  }
+  const lb = S.einst.letztesBackup;
+  const hatDaten = S.buchungen.length + S.depot.length + S.abos.length > 0;
+  if (hatDaten && (!lb || tageBis(lb, heute()) > 30)) {
+    h += `<div class="hinweis">💾 ${lb ? `Dein letztes Backup ist vom ${datumDE(lb)}.` : "Du hast noch kein Backup gemacht."}
+      <div class="btnrow"><button class="btn klein" data-action="export">Jetzt sichern</button></div></div>`;
+  }
+  return h;
+}
+
+/* ================= Seiten ================= */
+function renderUebersicht() {
+  const m = heute().slice(0, 7);
+  const {aus} = monatswerte(m);
+  const budget = +S.einst.budget, sparziel = +S.einst.sparziel;
+  const gespart = gespartGesamt();
+  const ds = depotSumme(depotPositionen());
+  const abos = aboDaten();
+  const naechste = abos.filter(a => a.tage != null && a.tage >= 0).sort((a, b) => a.tage - b.tage).slice(0, 3);
+
+  let h = hinweise();
+  h += `<div class="grid2">
+    ${kpi(`Budget übrig (${MONATSNAMEN[+m.slice(5) - 1]})`, eur(budget - aus))}
+    ${kpi("Gespart gesamt", eur(gespart), `${(sparziel > 0 ? gespart / sparziel * 100 : 0).toFixed(0)} % vom Sparziel`, "muted")}
+    ${kpi("Depotwert", ds.anzahl ? eur(ds.wert) : "–", ds.anzahl ? `${eur(ds.gv)} (${proz(ds.gvp)})` : "", ds.gv >= 0 ? "pos" : "neg")}
+    ${kpi("Abos pro Monat", eur(summe(abos, a => a.monatlich)))}</div>`;
+  h += `<div class="card"><h3>Budget-Status</h3>${ampelHTML(aus, budget)}</div>`;
+  h += `<div class="card"><h3>Nächste Kündigungsfristen</h3>${naechste.length
+    ? `<ul class="liste">${naechste.map(a => `<li><div><div class="t">${esc(a.name)}</div>
+        <div class="s">kündigen bis ${datumDE(a.kuendigenBis)}</div></div>
+        <span class="badge ${a.status.k}">${a.tage} Tage</span></li>`).join("")}</ul>`
+    : `<div class="leer">Keine anstehenden Fristen</div>`}</div>`;
+  h += `<div class="card"><h3>Schnellzugriff</h3><div class="btnrow">
+    <button class="btn" data-action="neuBuchung">➕ Buchung</button>
+    <button class="btn sek" data-action="tab" data-tab="cockpit">💰 Cockpit</button>
+    <button class="btn sek" data-action="tab" data-tab="depot">📈 Depot</button>
+    <button class="btn sek" data-action="tab" data-tab="abos">📑 Abos</button></div></div>`;
+  if (!S.buchungen.length && !S.depot.length && !S.abos.length) {
+    h += `<div class="card"><h3>Erste Schritte</h3><p class="s muted">Noch keine Daten. Du kannst Demo-Daten laden,
+      um alles auszuprobieren (über ⚙️ später wieder löschbar).</p>
+      <button class="btn sek voll" data-action="demo">Demo-Daten laden</button></div>`;
+  }
+  return h;
+}
+
+function renderCockpit() {
+  const seg = `<div class="seg">${[["uebersicht", "Übersicht"], ["eintraege", "Einträge"], ["regeln", "Wiederkehrend"]]
+    .map(([k, l]) => `<button data-action="cansicht" data-ansicht="${k}" class="${UI.cockpitAnsicht === k ? "aktiv" : ""}">${l}</button>`).join("")}</div>`;
+  if (UI.cockpitAnsicht === "eintraege") return seg + cockpitEintraege();
+  if (UI.cockpitAnsicht === "regeln") return seg + cockpitRegeln();
+
+  const monate = [...new Set(S.buchungen.map(b => b.datum.slice(0, 7)).concat([heute().slice(0, 7)]))].sort().reverse();
+  if (!monate.includes(UI.monat)) UI.monat = monate[0];
+  const m = UI.monat, w = monatswerte(m), vm = vormonat(m), wv = monatswerte(vm);
+  const hatVor = S.buchungen.some(b => b.datum.startsWith(vm));
+  const budget = +S.einst.budget, sparziel = +S.einst.sparziel, gespart = gespartGesamt();
+  const diff = (a, b) => `${a - b >= 0 ? "+" : ""}${eur(a - b)} ggü. Vormonat`;
+
+  let h = seg + `<label class="f"><select data-change="monat">${monate.map(x =>
+    `<option value="${x}" ${x === m ? "selected" : ""}>${monatLabel(x)}</option>`).join("")}</select></label>`;
+  h += `<div class="grid2">
+    ${kpi("Einnahmen", eur(w.ein), hatVor ? diff(w.ein, wv.ein) : "", w.ein >= wv.ein ? "pos" : "neg")}
+    ${kpi("Ausgaben", eur(w.aus), hatVor ? diff(w.aus, wv.aus) : "", w.aus <= wv.aus ? "pos" : "neg")}
+    ${kpi("Budget übrig", eur(budget - w.aus))}
+    ${kpi("Gespart gesamt", eur(gespart))}</div>`;
+  h += `<div class="card"><h3>Budget-Ampel</h3>${ampelHTML(w.aus, budget)}</div>`;
+  const fs = sparziel > 0 ? gespart / sparziel : 0;
+  h += `<div class="card"><h3>Sparziel</h3><div class="spread"><b>${eur(gespart)}</b><span class="muted s">von ${eur(sparziel)}</span></div>
+    ${fortschritt(fs, "var(--green)")}<div class="s muted" style="margin-top:6px">${(fs * 100).toFixed(0)} % erreicht ·
+    noch ${eur(Math.max(sparziel - gespart, 0))}</div></div>`;
+
+  const nachKat = {};
+  S.buchungen.filter(b => b.typ === "Ausgabe" && b.datum.startsWith(m))
+    .forEach(b => nachKat[b.kategorie] = (nachKat[b.kategorie] || 0) + +b.betrag);
+  h += `<div class="card"><h3>Ausgaben nach Kategorie</h3>${donut(Object.entries(nachKat).map(([label, value]) => ({label, value})))}</div>`;
+
+  const sechs = [];
+  for (let i = 5; i >= 0; i--) sechs.push(addMonate(m + "-01", -i).slice(0, 7));
+  const gruppen = sechs.map(mm => {
+    const v = monatswerte(mm);
+    return {label: MONATSNAMEN[+mm.slice(5) - 1].slice(0, 3), werte: [{v: v.ein, farbe: "#10B981"}, {v: v.aus, farbe: "#EF4444"}]};
+  });
+  h += `<div class="card"><h3>Einnahmen vs. Ausgaben (6 Monate)</h3>${balken(gruppen,
+    [{label: "Einnahmen", farbe: "#10B981"}, {label: "Ausgaben", farbe: "#EF4444"}])}</div>`;
+  return h;
+}
+
+function cockpitEintraege() {
+  if (!S.buchungen.length) return `<div class="card leer">Noch keine Einträge. Tippe auf <b>+</b>.</div>`;
+  const liste = [...S.buchungen].sort((a, b) => b.datum.localeCompare(a.datum));
+  const zeichen = {Ausgabe: "−", Einnahme: "+", Sparen: "→"}, kl = {Ausgabe: "neg", Einnahme: "pos", Sparen: ""};
+  return `<div class="card"><ul class="liste">${liste.map(b => `<li data-action="editBuchung" data-id="${b.id}">
+    <div><div class="t">${esc(b.kategorie)} ${b.serie ? `<span class="badge b-blau">🔁 ${esc(b.serie)}</span>` : ""}</div>
+    <div class="s">${datumDE(b.datum)} · ${esc(b.typ)}${b.notiz ? " · " + esc(b.notiz) : ""}</div></div>
+    <div class="right ${kl[b.typ] || ""}">${zeichen[b.typ] || ""} ${eur(b.betrag)}</div></li>`).join("")}</ul></div>
+    <button class="btn sek voll" data-action="csv">⬇️ Buchungen als CSV exportieren</button>`;
+}
+
+function cockpitRegeln() {
+  const h = `<div class="hinweis">Regelmäßige Zahlungen wie Miete, Gehalt oder Sparrate. Beim Öffnen der App werden
+    fällige Buchungen automatisch angelegt. Tippe auf <b>+</b> für eine neue Regel.</div>`;
+  if (!S.regeln.length) return h + `<div class="card leer">Noch keine Regeln.</div>`;
+  return h + `<div class="card"><ul class="liste">${S.regeln.map(r => `<li data-action="editRegel" data-id="${r.id}">
+    <div><div class="t">${esc(r.name)}</div>
+    <div class="s">${esc(r.typ)} · ${esc(r.intervall)} · ab ${datumDE(r.start)}${r.ende ? " bis " + datumDE(r.ende) : ""}</div>
+    <div class="s">Gebucht bis: ${datumDE(r.gebuchtBis)}</div></div><div class="right">${eur(r.betrag)}</div></li>`).join("")}</ul></div>`;
+}
+
+function indexNews() {
+  return `<div class="card"><h3>🌍 Märkte & Indizes</h3><div class="btnrow">${["DAX", "S&P 500", "MSCI World", "Nasdaq", "EURO STOXX 50"]
+    .map(i => link(newsUrl(i + " Börse"), esc(i) + " ↗")).join("")}</div></div>`;
+}
+
+function kursListe(t) {
+  const l = [...(S.kurse[t] || [])].reverse();
+  if (!l.length) return "";
+  return `<details style="margin-top:8px"><summary class="s muted">Eingetragene Kurse (${l.length})</summary>
+    <ul class="liste">${l.map(k => `<li><span>${datumDE(k.datum)}</span><span>${eur(k.kurs)}
+    <button class="btn klein gefahr" data-action="delKurs" data-ticker="${esc(t)}" data-datum="${k.datum}">✕</button></span></li>`).join("")}</ul></details>`;
+}
+
+function renderDepot() {
+  const pos = depotPositionen();
+  if (!pos.length) return `<div class="card leer">Noch keine Positionen. Tippe auf <b>+</b>, um deine erste Aktie
+    oder deinen ersten ETF einzutragen.</div>` + indexNews();
+  const ds = depotSumme(pos);
+  let h = "";
+  const ohne = pos.filter(p => p.kurs == null);
+  if (ohne.length) h += `<div class="hinweis">Für ${ohne.map(p => esc(p.name)).join(", ")} fehlt noch ein aktueller Kurs.
+    Tippe unten auf „Kurs eintragen“.</div>`;
+  h += `<div class="grid2">${kpi("Depotwert", eur(ds.wert))}${kpi("Einstandswert", eur(ds.einstand))}
+    ${kpi("Gewinn / Verlust", eur(ds.gv), proz(ds.gvp), ds.gv >= 0 ? "pos" : "neg")}${kpi("Positionen", pos.length)}</div>`;
+
+  const mitWert = pos.filter(p => p.wert != null);
+  h += `<div class="card"><h3>Verteilung nach Wert</h3>${donut(mitWert.map(p => ({label: p.name, value: p.wert})))}</div>`;
+  h += `<div class="card"><h3>Gewinn / Verlust je Position</h3>${balken(mitWert.map(p =>
+    ({label: p.name, werte: [{v: p.gv, farbe: p.gv >= 0 ? "#10B981" : "#EF4444"}]})))}</div>`;
+
+  if (!pos.some(p => p.ticker === UI.depotTicker)) UI.depotTicker = pos[0].ticker;
+  const sel = pos.find(p => p.ticker === UI.depotTicker);
+  h += `<div class="card"><h3>📉 Kursverlauf</h3><div class="chips">${pos.map(p =>
+    `<button class="chip ${p.ticker === sel.ticker ? "aktiv" : ""}" data-action="dticker" data-ticker="${esc(p.ticker)}">${esc(p.name)}</button>`).join("")}</div>
+    ${linie(S.kurse[sel.ticker] || [], sel.kaufkurs)}${kursListe(sel.ticker)}</div>`;
+
+  h += `<div class="card"><h3>Positionen</h3><ul class="liste">${pos.map(p => `<li class="col">
+    <div class="spread"><div><div class="t">${esc(p.name)} <span class="badge b-grau">${esc(p.typ)}</span></div>
+    <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. · Ø ${eur(p.kaufkurs)}</div>
+    <div class="s">Kurs: ${p.kurs != null ? `${eur(p.kurs)} (${datumDE(p.kursDatum)})` : "noch nicht eingetragen"}</div></div>
+    <div class="right"><div class="t">${eur(p.wert)}</div><div class="s ${p.gv >= 0 ? "pos" : "neg"}">${p.gv != null ? eur(p.gv) : ""}</div></div></div>
+    <div class="btnrow"><button class="btn klein" data-action="kurs" data-ticker="${esc(p.ticker)}">Kurs eintragen</button>
+    ${link(yahooUrl(p.ticker), "Kurs nachsehen ↗")}
+    ${link(newsUrl(`"${p.name}" ${p.typ === "ETF" ? "ETF" : "Aktie"}`), "📰 News ↗")}</div></li>`).join("")}</ul></div>`;
+
+  h += `<details class="card"><summary><b>Einzelne Käufe bearbeiten</b></summary><ul class="liste">${S.depot.map(p =>
+    `<li data-action="editPosition" data-id="${p.id}"><div><div class="t">${esc(p.name)}</div>
+    <div class="s">${esc(p.ticker)} · ${fmtZahl(p.menge)} Stk. à ${eur(p.kaufkurs)}</div></div><span class="muted">›</span></li>`).join("")}</ul></details>`;
+  return h + indexNews();
+}
+
+function verbraucherNews() {
+  return `<div class="card"><h3>🛡️ Verbraucherschutz</h3>${link(newsUrl("Verbraucherzentrale Preiserhöhung Kündigung"),
+    "Aktuelle Meldungen ↗", "btn sek voll")}</div>`;
+}
+
+function renderAbos() {
+  const a = aboDaten();
+  if (!a.length) return `<div class="card leer">Noch keine Verträge. Tippe auf <b>+</b>.</div>` + verbraucherNews();
+  let h = "";
+  a.filter(x => x.tage != null && x.tage >= 0 && x.tage <= 30).sort((x, y) => x.tage - y.tage).forEach(x =>
+    h += `<div class="warn">⚠️ <b>${esc(x.name)}</b>: Kündigung spätestens bis <b>${datumDE(x.kuendigenBis)}</b> (noch ${x.tage} Tage)</div>`);
+  a.filter(x => x.tage != null && x.tage < 0).forEach(x =>
+    h += `<div class="hinweis"><b>${esc(x.name)}</b>: Kündigungsfrist verstrichen. Bitte Vertragsende prüfen
+      oder eine automatische Verlängerung eintragen.</div>`);
+  const kommend = a.filter(x => x.tage != null && x.tage >= 0).sort((x, y) => x.tage - y.tage);
+  h += `<div class="grid2">${kpi("Pro Monat", eur(summe(a, x => x.monatlich)))}${kpi("Pro Jahr", eur(summe(a, x => x.jaehrlich)))}
+    ${kpi("Verträge", a.length)}${kpi("Nächste Frist", kommend.length ? datumDE(kommend[0].kuendigenBis) : "–",
+    kommend.length ? esc(kommend[0].name) : "", "muted")}</div>`;
+
+  const nk = {};
+  a.forEach(x => nk[x.kategorie] = (nk[x.kategorie] || 0) + x.monatlich);
+  h += `<div class="card"><h3>Monatliche Kosten nach Kategorie</h3>${donut(Object.entries(nk).map(([label, value]) => ({label, value})))}</div>`;
+  h += `<div class="card"><h3>Jahreskosten je Vertrag</h3>${hBalken([...a].sort((x, y) => y.jaehrlich - x.jaehrlich)
+    .map(x => ({label: x.name, value: x.jaehrlich})))}</div>`;
+
+  const sortiert = [...a].sort((x, y) => (x.kuendigenBis || "9999").localeCompare(y.kuendigenBis || "9999"));
+  h += `<div class="card"><h3>Alle Verträge</h3><ul class="liste">${sortiert.map(x => `<li data-action="editAbo" data-id="${x.id}">
+    <div><div class="t">${esc(x.name)}</div><div class="s">${esc(x.anbieter || x.kategorie)} · ${eur(x.betrag)} ${esc(x.intervall)}</div>
+    <div class="s">${x.kuendigenBis ? "Kündigen bis " + datumDE(x.kuendigenBis) : "ohne Vertragsende"}</div></div>
+    <div class="right"><span class="badge ${x.status.k}">${x.status.t}</span><div class="s muted" style="margin-top:4px">${eur(x.monatlich)}/Monat</div></div></li>`).join("")}</ul></div>`;
+
+  const anbieter = [...new Set(a.map(x => (x.anbieter || x.name).trim()).filter(Boolean))];
+  h += `<div class="card"><h3>📰 News zu deinen Anbietern</h3><p class="s muted" style="margin:0">Sucht nach Preiserhöhungen und Tarifänderungen.</p>
+    <div class="btnrow">${anbieter.map(n => link(newsUrl(`"${n}" Preiserhöhung OR Tarifänderung`), esc(n) + " ↗")).join("")}</div></div>`;
+  return h + verbraucherNews();
+}
+
+function render() {
+  const [t, u] = TITEL[UI.tab];
+  $("#titel").textContent = t; $("#untertitel").textContent = u;
+  document.querySelectorAll(".tabbar button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === UI.tab));
+  $("#fab").hidden = UI.tab === "uebersicht";
+  $("#app").innerHTML = {uebersicht: renderUebersicht, cockpit: renderCockpit, depot: renderDepot, abos: renderAbos}[UI.tab]();
+  zeigeBanner();
+}
+
+/* ================= Formulare (Bottom Sheet) ================= */
+function oeffneSheet(html) { $("#sheetInhalt").innerHTML = html; $("#sheet").hidden = false; document.body.style.overflow = "hidden"; }
+function schliesseSheet() { $("#sheet").hidden = true; $("#sheetInhalt").innerHTML = ""; document.body.style.overflow = ""; }
+const kopf = titel => `<h2>${titel}<button type="button" class="x" data-action="schliessen" aria-label="Schließen">✕</button></h2>`;
+const feld = (label, name, wert = "", typ = "text", extra = "") =>
+  `<label class="f">${label}<input name="${name}" type="${typ}" value="${esc(wert)}" ${extra}></label>`;
+const betragFeld = (label, name, wert) => feld(label, name, (wert != null && wert !== "") ? String(wert).replace(".", ",") : "",
+  "text", 'inputmode="decimal" autocomplete="off" placeholder="0,00"');
+const auswahl = (label, name, opt, wert) => `<label class="f">${label}<select name="${name}">${opt.map(o =>
+  `<option ${o === wert ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`;
+const fuss = (id, aktion) => `<button class="btn voll" type="submit">Speichern</button>${id
+  ? `<button type="button" class="btn gefahr voll" style="margin-top:8px" data-action="${aktion}" data-id="${id}">Löschen</button>` : ""}`;
+
+function formBuchung(id) {
+  const b = S.buchungen.find(x => x.id === id) || {datum: heute(), typ: "Ausgabe", kategorie: "Lebensmittel", betrag: "", notiz: ""};
+  oeffneSheet(`<form data-form="buchung" data-id="${id || ""}">${kopf(id ? "Eintrag bearbeiten" : "Neuer Eintrag")}
+    <div class="zeile">${feld("Datum", "datum", b.datum, "date", "required")}${auswahl("Typ", "typ", TYPEN, b.typ)}</div>
+    ${auswahl("Kategorie", "kategorie", KATEGORIEN, b.kategorie)}
+    ${betragFeld("Betrag (€)", "betrag", b.betrag)}
+    ${feld("Notiz (optional)", "notiz", b.notiz || "")}
+    <p class="s muted">„Sparen“ = Geld, das du zur Seite legst. Es zählt für dein Sparziel.</p>
+    ${b.serie ? `<p class="s muted">Stammt aus der Regel „${esc(b.serie)}“. Gelöschte Buchungen werden nicht neu angelegt.</p>` : ""}
+    ${fuss(id, "delBuchung")}</form>`);
+}
+function formRegel(id) {
+  const r = S.regeln.find(x => x.id === id) || {name: "", typ: "Ausgabe", kategorie: "Miete", betrag: "",
+    intervall: "monatlich", start: heute().slice(0, 8) + "01", ende: ""};
+  oeffneSheet(`<form data-form="regel" data-id="${id || ""}">${kopf(id ? "Regel bearbeiten" : "Wiederkehrende Buchung")}
+    ${feld("Name (z. B. Miete)", "name", r.name, "text", "required")}
+    <div class="zeile">${auswahl("Typ", "typ", TYPEN, r.typ)}${auswahl("Kategorie", "kategorie", KATEGORIEN, r.kategorie)}</div>
+    <div class="zeile">${betragFeld("Betrag (€)", "betrag", r.betrag)}${auswahl("Intervall", "intervall", Object.keys(INTERVALLE), r.intervall)}</div>
+    <div class="zeile">${feld("Erste Buchung", "start", r.start, "date", "required")}${feld("Letzte (optional)", "ende", r.ende || "", "date")}</div>
+    <p class="s muted">Liegt die erste Buchung in der Vergangenheit, werden alle Buchungen bis heute nachgetragen.
+    Änderungen gelten nur für künftige Buchungen.</p>${fuss(id, "delRegel")}</form>`);
+}
+function formPosition(id) {
+  const p = S.depot.find(x => x.id === id) || {name: "", ticker: "", typ: "Aktie", menge: "", kaufkurs: ""};
+  oeffneSheet(`<form data-form="position" data-id="${id || ""}">${kopf(id ? "Kauf bearbeiten" : "Neue Position / neuer Kauf")}
+    ${feld("Name (für die News-Suche, z. B. SAP)", "name", p.name, "text", "required")}
+    <div class="zeile">${feld("Ticker (z. B. SAP.DE)", "ticker", p.ticker, "text", 'required autocapitalize="characters" autocorrect="off"')}
+    ${auswahl("Typ", "typ", ["Aktie", "ETF"], p.typ)}</div>
+    <div class="zeile">${betragFeld("Menge (Stück)", "menge", p.menge)}${betragFeld("Kaufkurs (€/Stück)", "kaufkurs", p.kaufkurs)}</div>
+    ${id ? "" : betragFeld("Aktueller Kurs in € (optional)", "kurs", "")}
+    <p class="s muted">Den Ticker findest du auf finance.yahoo.com. Mehrere Käufe derselben Aktie einzeln mit gleichem Ticker eintragen,
+    sie werden automatisch zusammengefasst.</p>${fuss(id, "delPosition")}</form>`);
+}
+function formKurs(t) {
+  const p = depotPositionen().find(x => x.ticker === t), lk = letzterKurs(t);
+  oeffneSheet(`<form data-form="kurs" data-id="${esc(t)}">${kopf("Kurs eintragen")}
+    <p class="muted s" style="margin-top:0">${esc(p ? p.name : t)} (${esc(t)})${lk ? ` · zuletzt ${eur(lk.kurs)} am ${datumDE(lk.datum)}` : ""}</p>
+    <div class="zeile">${feld("Datum", "datum", heute(), "date", "required")}${betragFeld("Kurs (€/Stück)", "kurs", "")}</div>
+    ${link(yahooUrl(t), "Aktuellen Kurs nachsehen ↗", "btn sek voll")}
+    <p class="s muted">Achtung: Bei US-Werten zeigt Yahoo US-Dollar. Trag den Kurs in Euro ein, z. B. die Xetra-Notierung (Ticker mit .DE).</p>
+    <button class="btn voll" type="submit">Speichern</button></form>`);
+}
+function formAbo(id) {
+  const a = S.abos.find(x => x.id === id) || {name: "", anbieter: "", kategorie: "Streaming", betrag: "",
+    intervall: "monatlich", vertragsende: "", frist: 0, verlaengerung: ""};
+  oeffneSheet(`<form data-form="abo" data-id="${id || ""}">${kopf(id ? "Vertrag bearbeiten" : "Neuer Vertrag")}
+    ${feld("Name (z. B. Netflix)", "name", a.name, "text", "required")}
+    <div class="zeile">${feld("Anbieter (für News)", "anbieter", a.anbieter || "")}${auswahl("Kategorie", "kategorie", ABO_KATEGORIEN, a.kategorie)}</div>
+    <div class="zeile">${betragFeld("Betrag (€)", "betrag", a.betrag)}${auswahl("Zahlung", "intervall", Object.keys(INTERVALLE), a.intervall)}</div>
+    ${feld("Nächstes Vertragsende (leer = unbefristet)", "vertragsende", a.vertragsende || "", "date")}
+    <div class="zeile">${feld("Kündigungsfrist (Tage)", "frist", a.frist ?? 0, "number", 'inputmode="numeric" min="0"')}
+    ${feld("Verlängerung (Monate)", "verlaengerung", a.verlaengerung || "", "number", 'inputmode="numeric" min="0" placeholder="z. B. 12"')}</div>
+    <p class="s muted">Mit Verlängerung wird das Vertragsende automatisch weitergeschoben, sobald es vorbei ist.</p>
+    ${fuss(id, "delAbo")}</form>`);
+}
+function formEinstellungen() {
+  const e = S.einst;
+  oeffneSheet(`<form data-form="einst">${kopf("Einstellungen")}
+    <div class="zeile">${betragFeld("Monatsbudget (€)", "budget", e.budget)}${betragFeld("Sparziel (€)", "sparziel", e.sparziel)}</div>
+    <button class="btn voll" type="submit">Ziele speichern</button></form>
+    <hr class="trenner"><h3>Daten & Backup</h3>
+    <p class="s muted">Deine Daten liegen nur auf diesem Gerät. Sichere sie regelmäßig.${e.letztesBackup ? ` Letztes Backup: ${datumDE(e.letztesBackup)}.` : ""}</p>
+    <div class="btnrow"><button class="btn sek" data-action="export">💾 Backup exportieren</button>
+    <button class="btn sek" data-action="import">📥 Backup importieren</button></div>
+    <div class="btnrow"><button class="btn sek" data-action="demo">Demo-Daten laden</button>
+    <button class="btn gefahr" data-action="alleLoeschen">Alle Daten löschen</button></div>
+    <p class="s muted" style="margin-top:14px">Design: über das Symbol 🌓 oben rechts (Automatisch / Hell / Dunkel).</p>`);
+}
+function formImport() {
+  oeffneSheet(`<form data-form="import">${kopf("Backup importieren")}
+    <p class="s muted">Wähle eine Backup-Datei oder füge den Backup-Text ein. <b>Die aktuellen Daten werden ersetzt.</b></p>
+    <label class="f">Backup-Datei<input type="file" name="datei" accept=".json,application/json,text/plain"></label>
+    <label class="f">… oder Backup-Text<textarea name="text" rows="5"></textarea></label>
+    <button class="btn voll" type="submit">Importieren</button></form>`);
+}
+
+/* ================= Speichern aus Formularen ================= */
+function pruefeBetrag(v, name = "Betrag") {
+  const n = zahl(v);
+  if (isNaN(n) || n <= 0) throw new Error(`Bitte einen gültigen Wert für „${name}“ eingeben (größer 0).`);
+  return n;
+}
+function upsert(liste, id, obj) {
+  if (id) { const i = liste.findIndex(x => x.id === id); if (i >= 0) { liste[i] = {...liste[i], ...obj}; return; } }
+  liste.push({id: uid(), ...obj});
+}
+function setzeKurs(t, datum, kurs) {
+  const l = (S.kurse[t] = S.kurse[t] || []);
+  const i = l.findIndex(x => x.datum === datum);
+  if (i >= 0) l[i].kurs = kurs; else l.push({datum, kurs});
+  l.sort((a, b) => a.datum.localeCompare(b.datum));
+}
+function fertig(text) { speichern(); schliesseSheet(); render(); if (text) toast(text); }
+
+const SPEICHERN = {
+  buchung(d, id) {
+    if (!d.datum) throw new Error("Bitte ein Datum wählen.");
+    upsert(S.buchungen, id, {datum: d.datum, typ: d.typ, kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag), notiz: d.notiz.trim()});
+    fertig("Eintrag gespeichert");
+  },
+  regel(d, id) {
+    if (!d.name.trim()) throw new Error("Bitte einen Namen eingeben.");
+    if (!d.start) throw new Error("Bitte die erste Buchung angeben.");
+    if (d.ende && d.ende < d.start) throw new Error("Die letzte Buchung liegt vor der ersten.");
+    upsert(S.regeln, id, {name: d.name.trim(), typ: d.typ, kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag),
+      intervall: d.intervall, start: d.start, ende: d.ende || ""});
+    const n = erzeugeWiederkehrende();
+    fertig(n ? `Regel gespeichert, ${n} Buchung(en) angelegt` : "Regel gespeichert");
+  },
+  position(d, id) {
+    const name = d.name.trim(), ticker = d.ticker.trim().toUpperCase();
+    if (!name || !ticker) throw new Error("Bitte Name und Ticker eingeben.");
+    const obj = {name, ticker, typ: d.typ, menge: pruefeBetrag(d.menge, "Menge"), kaufkurs: pruefeBetrag(d.kaufkurs, "Kaufkurs")};
+    const kurs = d.kurs && d.kurs.trim() ? pruefeBetrag(d.kurs, "Aktueller Kurs") : null;
+    upsert(S.depot, id, obj);
+    if (kurs != null) setzeKurs(ticker, heute(), kurs);
+    fertig("Position gespeichert");
+  },
+  kurs(d, ticker) {
+    if (!d.datum) throw new Error("Bitte ein Datum wählen.");
+    setzeKurs(ticker, d.datum, pruefeBetrag(d.kurs, "Kurs"));
+    fertig("Kurs gespeichert");
+  },
+  abo(d, id) {
+    if (!d.name.trim()) throw new Error("Bitte einen Namen eingeben.");
+    const frist = parseInt(d.frist || "0", 10), verl = parseInt(d.verlaengerung || "0", 10);
+    upsert(S.abos, id, {name: d.name.trim(), anbieter: d.anbieter.trim(), kategorie: d.kategorie, betrag: pruefeBetrag(d.betrag),
+      intervall: d.intervall, vertragsende: d.vertragsende || "", frist: frist > 0 ? frist : 0, verlaengerung: verl > 0 ? verl : 0});
+    verlaengereAbos();
+    fertig("Vertrag gespeichert");
+  },
+  einst(d) {
+    const b = zahl(d.budget), s = zahl(d.sparziel);
+    if (!(b > 0) || !(s > 0)) throw new Error("Budget und Sparziel müssen größer als 0 sein.");
+    S.einst.budget = b; S.einst.sparziel = s;
+    fertig("Einstellungen gespeichert");
+  },
+  async import(d) {
+    let text = (d.text || "").trim();
+    if (!text && d.datei && d.datei.size) text = (await d.datei.text()).trim();
+    if (!text) throw new Error("Bitte eine Datei wählen oder Text einfügen.");
+    let daten;
+    try { daten = JSON.parse(text); } catch (e) { throw new Error("Das ist kein gültiges Backup."); }
+    if (!daten || typeof daten !== "object" || !Array.isArray(daten.buchungen)) throw new Error("Unbekanntes Backup-Format.");
+    if (!confirm("Aktuelle Daten durch das Backup ersetzen?")) return;
+    S = zusammenfuehren(daten);
+    wendeThemeAn(); erzeugeWiederkehrende(); verlaengereAbos();
+    fertig("Backup importiert");
+  },
+};
+
+/* ================= Backup, Export, Demo ================= */
+async function teileDatei(inhalt, name, mime) {
+  const datei = new File([inhalt], name, {type: mime});
+  try {
+    if (navigator.canShare && navigator.canShare({files: [datei]})) { await navigator.share({files: [datei], title: name}); return true; }
+  } catch (e) { if (e.name === "AbortError") return false; }
+  const url = URL.createObjectURL(datei), a = document.createElement("a");
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  return true;
+}
+function backupErledigt() { S.einst.letztesBackup = heute(); speichern(); }
+function exportieren() {
+  oeffneSheet(`${kopf("Backup exportieren")}
+    <p class="s muted">Speichere die Datei z. B. in der Dateien-App („In Dateien sichern“) oder kopiere den Text in eine Notiz.
+    Das Backup enthält deine Finanzdaten, teile es nicht öffentlich.</p>
+    <div class="btnrow"><button class="btn" data-action="backupDatei">📄 Als Datei sichern</button>
+    <button class="btn sek" data-action="backupKopieren">📋 Text kopieren</button></div>
+    <label class="f" style="margin-top:12px">Backup-Text<textarea id="backupText" rows="6" readonly>${esc(JSON.stringify(S))}</textarea></label>`);
+}
+async function backupDatei() {
+  if (await teileDatei(JSON.stringify(S, null, 1), `finanz-backup-${heute()}.json`, "application/json")) {
+    backupErledigt(); toast("Backup erstellt");
+  }
+}
+async function backupKopieren() {
+  try { await navigator.clipboard.writeText(JSON.stringify(S)); backupErledigt(); toast("In die Zwischenablage kopiert"); }
+  catch (e) { const t = $("#backupText"); if (t) { t.removeAttribute("readonly"); t.focus(); t.select(); } toast("Bitte Text markieren und kopieren"); }
+}
+function csvExport() {
+  const z = [["Datum", "Typ", "Kategorie", "Betrag", "Notiz", "Serie"]].concat([...S.buchungen]
+    .sort((a, b) => a.datum.localeCompare(b.datum))
+    .map(b => [datumDE(b.datum), b.typ, b.kategorie, String(b.betrag).replace(".", ","), b.notiz || "", b.serie || ""]));
+  const csv = "\uFEFF" + z.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+  teileDatei(csv, `buchungen-${heute()}.csv`, "text/csv");
+}
+function demoLaden() {
+  if ((S.buchungen.length || S.depot.length || S.abos.length) && !confirm("Demo-Daten zu deinen vorhandenen Daten hinzufügen?")) return;
+  const h = heute(), m0 = h.slice(0, 7) + "-01";
+  const add = (mo, tag, typ, kat, betrag) => {
+    const d = addMonate(m0, -mo).slice(0, 8) + pad(tag);
+    if (d <= h) S.buchungen.push({id: uid(), datum: d, typ, kategorie: kat, betrag, notiz: "Demo"});
+  };
+  for (let mo = 0; mo < 6; mo++) {
+    add(mo, 1, "Einnahme", "Gehalt", 2800); add(mo, 2, "Ausgabe", "Miete", 850);
+    add(mo, 5, "Ausgabe", "Lebensmittel", 120 + mo * 15); add(mo, 12, "Ausgabe", "Lebensmittel", 95);
+    add(mo, 9, "Ausgabe", "Freizeit", 60 + mo * 10); add(mo, 15, "Ausgabe", "Mobilität", 49);
+    add(mo, 3, "Sparen", "Sonstiges", 300);
+  }
+  S.depot.push({id: uid(), name: "Beispiel AG", ticker: "DEMO1", typ: "Aktie", menge: 10, kaufkurs: 100},
+               {id: uid(), name: "Beispiel World ETF", ticker: "DEMO2", typ: "ETF", menge: 25, kaufkurs: 80});
+  [[-90, 95], [-60, 104], [-30, 110], [0, 116]].forEach(([t, k]) => setzeKurs("DEMO1", addTage(h, t), k));
+  [[-90, 81], [-60, 84], [-30, 79], [0, 88]].forEach(([t, k]) => setzeKurs("DEMO2", addTage(h, t), k));
+  S.abos.push(
+    {id: uid(), name: "Streaming-Abo", anbieter: "Netflix", kategorie: "Streaming", betrag: 12.99, intervall: "monatlich", vertragsende: "", frist: 0, verlaengerung: 0},
+    {id: uid(), name: "Handyvertrag", anbieter: "Telekom", kategorie: "Mobilfunk & Internet", betrag: 29.99, intervall: "monatlich", vertragsende: addTage(h, 45), frist: 30, verlaengerung: 12},
+    {id: uid(), name: "Haftpflicht", anbieter: "Beispiel-Versicherung", kategorie: "Versicherung", betrag: 65, intervall: "jährlich", vertragsende: addTage(h, 150), frist: 90, verlaengerung: 12});
+  fertig("Demo-Daten geladen (fiktive Werte)");
+}
+
+/* ================= Design, Meldungen ================= */
+function wendeThemeAn() {
+  const t = THEMES.includes(S.einst.theme) ? S.einst.theme : "auto";
+  if (t === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  $("#themeBtn").textContent = THEME_ICON[t];
+}
+function wechsleTheme() {
+  S.einst.theme = THEMES[(THEMES.indexOf(S.einst.theme) + 1) % THEMES.length];
+  speichern(); wendeThemeAn(); toast("Design: " + THEME_NAMEN[S.einst.theme]);
+}
+let toastTimer;
+function toast(text) {
+  let t = $("#toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast";
+    t.style.pointerEvents = "none"; document.body.appendChild(t); }
+  t.textContent = text; t.classList.remove("weg");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add("weg"), 2200);
+}
+function zeigeBanner() {
+  $("#banner").innerHTML = speicherOK ? "" :
+    `<div style="padding:14px 14px 0;max-width:700px;margin:0 auto"><div class="warn">⚠️ Speichern ist auf diesem
+    Gerät gerade nicht möglich. Deine Eingaben gehen beim Schließen verloren. Bitte ein Backup exportieren.</div></div>`;
+}
+
+/* ================= Bedienung ================= */
+function loeschen(liste, id, name) {
+  if (!confirm(name + " löschen?")) return;
+  S[liste] = S[liste].filter(x => x.id !== id);
+  fertig(name + " gelöscht");
+}
+const AKTIONEN = {
+  tab: el => { UI.tab = el.dataset.tab; window.scrollTo(0, 0); render(); },
+  theme: () => wechsleTheme(),
+  einstellungen: () => formEinstellungen(),
+  schliessen: () => schliesseSheet(),
+  neu: () => {
+    if (UI.tab === "cockpit") UI.cockpitAnsicht === "regeln" ? formRegel() : formBuchung();
+    else if (UI.tab === "depot") formPosition();
+    else if (UI.tab === "abos") formAbo();
+  },
+  neuBuchung: () => formBuchung(),
+  cansicht: el => { UI.cockpitAnsicht = el.dataset.ansicht; render(); },
+  dticker: el => { UI.depotTicker = el.dataset.ticker; render(); },
+  editBuchung: el => formBuchung(el.dataset.id),
+  editRegel: el => formRegel(el.dataset.id),
+  editPosition: el => formPosition(el.dataset.id),
+  editAbo: el => formAbo(el.dataset.id),
+  kurs: el => formKurs(el.dataset.ticker),
+  delBuchung: el => loeschen("buchungen", el.dataset.id, "Eintrag"),
+  delPosition: el => loeschen("depot", el.dataset.id, "Kauf"),
+  delAbo: el => loeschen("abos", el.dataset.id, "Vertrag"),
+  delRegel: el => {
+    if (!confirm("Regel löschen? Bereits angelegte Buchungen bleiben erhalten.")) return;
+    S.regeln = S.regeln.filter(x => x.id !== el.dataset.id);
+    fertig("Regel gelöscht");
+  },
+  delKurs: el => {
+    if (!confirm("Diesen Kurs löschen?")) return;
+    const t = el.dataset.ticker;
+    S.kurse[t] = (S.kurse[t] || []).filter(k => k.datum !== el.dataset.datum);
+    speichern(); render();
+  },
+  export: () => exportieren(),
+  backupDatei: () => backupDatei(),
+  backupKopieren: () => backupKopieren(),
+  import: () => formImport(),
+  csv: () => csvExport(),
+  demo: () => demoLaden(),
+  alleLoeschen: () => {
+    if (!confirm("Wirklich ALLE Daten löschen? Das kann nicht rückgängig gemacht werden.")) return;
+    const theme = S.einst.theme;
+    S = STANDARD(); S.einst.theme = theme;
+    fertig("Alle Daten gelöscht");
+  },
+};
+
+document.addEventListener("click", e => {
+  if (e.target === $("#sheet")) { schliesseSheet(); return; }   // Tippen neben das Formular schließt es
+  const el = e.target.closest("[data-action]");
+  if (!el) return;
+  const f = AKTIONEN[el.dataset.action];
+  if (f) { e.preventDefault(); f(el); }
+});
+document.addEventListener("change", e => {
+  if (e.target.dataset.change === "monat") { UI.monat = e.target.value; render(); }
+});
+document.addEventListener("submit", async e => {
+  const form = e.target.closest("form[data-form]");
+  if (!form) return;
+  e.preventDefault();
+  const d = Object.fromEntries(new FormData(form));
+  try { await SPEICHERN[form.dataset.form](d, form.dataset.id || null); }
+  catch (err) { alert(err.message); }
+});
+// Wenn die App nach Tagen wieder in den Vordergrund kommt: fällige Buchungen nachholen
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  const n = erzeugeWiederkehrende(), v = verlaengereAbos();
+  if (n || v) render();
+  if (n) toast(`${n} wiederkehrende Buchung(en) angelegt`);
+});
+
+/* ================= Start ================= */
+laden();
+wendeThemeAn();
+const neueBuchungen = erzeugeWiederkehrende();
+verlaengereAbos();
+render();
+if (neueBuchungen) toast(`${neueBuchungen} wiederkehrende Buchung(en) angelegt`);
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
